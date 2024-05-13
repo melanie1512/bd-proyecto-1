@@ -154,13 +154,13 @@ Record AVLFile::find(long pos_node, int key)
 {
     if (pos_node == -1) {
         // si el código no se encuentra, retorna registro invalido
-        return Record{-1, "NOT FOUND", -1};
+        return Record(-1, "NOT FOUND", "NOT FOUND", "NOT FOUND", 0.0);
     }
     std::fstream file(filename, ios::binary | ios::in | ios::out);
     //error al abrir archivo
     if (!file) {
         cerr << "Error opening file." << endl;
-        return Record{-1, "FILE ERROR", -1};
+        return Record(-1, "FILE ERROR", "FILE ERROR", "FILE ERROR", 0.0);
     }
     file.seekg(pos_node * sizeof(Record), ios::beg);
     Record node;
@@ -233,8 +233,7 @@ void AVLFile::insert(long &pos_node, Record record)
     file.close();
 }
 
-void AVLFile::remove(long &pos_node, int key)
-{
+void AVLFile::remove(long &pos_node, int key) {
     std::fstream file(filename, ios::binary | ios::in | ios::out);
     if (!file) {
         std::cerr << "Failed to open file for writing." << std::endl;
@@ -243,30 +242,38 @@ void AVLFile::remove(long &pos_node, int key)
     if (pos_node == -1)
         return; // Nodo no encontrado, terminar.
 
-    file.seekg(pos_node * sizeof(Record), ios::beg);
     Record node;
+    file.seekg(pos_node * sizeof(Record), ios::beg);
     file.read(reinterpret_cast<char*>(&node), sizeof(Record));
 
-    // Busca el nodo a eliminar.
+    if (!file) {
+        std::cerr << "Failed to read from file at position " << pos_node << std::endl;
+        file.close();
+        return;
+    }
+
     if (key < node.fdc_id) {
         remove(node.left, key); // Llama recursivamente para la izquierda.
-    }
-    else if (key > node.fdc_id) {
+    } else if (key > node.fdc_id) {
         remove(node.right, key); // Llama recursivamente para la derecha.
-    }
-    else {
+    } else {
         // Nodo encontrado, se procedemos a eliminar.
         if (node.left == -1 || node.right == -1) {
             long tempPos = (node.left != -1) ? node.left : node.right;
 
-            // Nodo con un solo hijo o sin hijos.
+            // Nodo con un solo hijo
             if (tempPos == -1) {
-                pos_node = -1; // No hay hijos, simplemente elimina el nodo.
+                pos_node = -1; // No hay hijos elimina el nodo.
             } else {
-                // Un hijo: Reemplaza el nodo con el hijo.
+                //Reemplaza el nodo con el hijo.
                 Record tempNode;
                 file.seekg(tempPos * sizeof(Record), ios::beg);
                 file.read(reinterpret_cast<char*>(&tempNode), sizeof(Record));
+                if (!file) {
+                    std::cerr << "Failed to read from file at position " << tempPos << std::endl;
+                    file.close();
+                    return;
+                }
                 node = tempNode;
                 pos_node = tempPos;
             }
@@ -276,26 +283,37 @@ void AVLFile::remove(long &pos_node, int key)
             Record succNode;
             file.seekg(succPos * sizeof(Record), ios::beg);
             file.read(reinterpret_cast<char*>(&succNode), sizeof(Record));
-            node.fdc_id = succNode.fdc_id;// Copia el sucesor aquí.
+            if (!file) {
+                std::cerr << "Failed to read from file at position " << succPos << std::endl;
+                file.close();
+                return;
+            }
+            node.fdc_id = succNode.fdc_id; // Copia el sucesor aquí.
             strcpy(node.brand, succNode.brand);
             strcpy(node.description, succNode.description);
             strcpy(node.ingredients, succNode.ingredients);
-            node.servingsize=succNode.servingsize;
+            node.servingsize = succNode.servingsize;
 
             // Elimina el sucesor.
             remove(node.right, succNode.fdc_id);
         }
     }
 
-    // Actualiza y rebalancea el árbol después de la eliminación.
     if (pos_node != -1) {
         updateHeight(node);
         balance(pos_node);
 
-        writeRecord(node, pos_node);
+        file.seekp(pos_node * sizeof(Record), ios::beg);
+        file.write(reinterpret_cast<char*>(&node), sizeof(Record));
+        if (!file) {
+            std::cerr << "Failed to write to file at position " << pos_node << std::endl;
+        }
     }
+
     file.close();
 }
+
+
 
 long AVLFile::minValueNode(long pos) {
     std::fstream file(filename, ios::binary | ios::in);
@@ -378,6 +396,7 @@ void AVLFile::right_rota(long &rootPos)
 
     rootPos = leftChildPos;  // Actualiza root con el nuevo root después de la rotación
 }
+
 
 void AVLFile::left_rota(long &rootPos)
 {
