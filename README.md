@@ -3,13 +3,13 @@
 ## Introducción 
 
 Entender y aplicar los algoritmos de almacenamiento de archivos físicos y acceso concurrente.
-A través de crear y manipular un DataSet usando estrategias de organización de archivos.
+A través de crear y manipular un DataSet usando técnicas de organización de archivos.
 
 ### Objetivos
 
 ### Organización de Archivos
 
-Las estrategias usadas para este proyecto son las siguientes:
+Las técnicas usadas para este proyecto son las siguientes:
 
 - [ISAM-Sparse Index](poner link)
 - [Extendible Hashing](poner link)
@@ -17,7 +17,7 @@ Las estrategias usadas para este proyecto son las siguientes:
 
 ### Funciones implementadas
 
-Para cada estretegia, se debe implementó las siguientes funciones:
+Para cada técnica, se debe implementó las siguientes funciones:
 
 - vector<Registro> search(T key)
 - vector<Registro> rangeSearch(T begin-key, T end-key)
