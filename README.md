@@ -15,4 +15,15 @@ Las estrategias usadas para este proyecto son las siguientes:
 - [Extendible Hashing](poner link)
 - [AVL](poner link)
 
-- 
+### Funciones implementadas
+
+Para cada estretegia, se debe implementó las siguientes funciones:
+
+- vector<Registro> search(T key)
+- vector<Registro> rangeSearch(T begin-key, T end-key)
+- bool add(Registro registro)
+- bool remove(T key)
+
+### DataSet
+Hemos usado un dataset de [FoodData Central](https://www.kaggle.com/datasets/pranavkarnani/fooddata-central). Esta elección fue debida a los siguientes factores:
+
