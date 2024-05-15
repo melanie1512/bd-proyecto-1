@@ -87,31 +87,42 @@ namespace isam{
         ~DataPage(){};
     }; // MD*sizeof(Record) + sizeof(int) + sizeof(long) = TAM_PAGE;
 
+    int findpage( int beg, int end, char * key){
+        ifstream file(ifile, ios::app | ios::binary | fstream::out);
+        file.seekg(0, ios::beg);
+        int beg=0;
+        int final= 10; //debería ser indexPage.n -1
 
-    void findpage(std::ifstream &indexFile, std::ifstream &dataFile, char key){
-        IndexPage ipage;
-        indexFile.seekg(0, ios::beg);
-        //1. Indexo en los indexpage 
-        while(indexFile.read(reinterpret_cast<char*>(&ipage)), sizeof(indexPage)){ 
-            int i=0;
-            while (i < ipage.n && key > indexPage.keys[i]) {
-                i++; //avanzo mi pagina de index
+        while(beg<=final) {
+            Record r;
+            
+            int mid=(beg+final)/2;
+            int ant=mid;
+            file.seekg(mid);
+            file.read((char*)&r, sizeof(Record));
+            if(key==r.codigo){
+                return mid;
+                file.close();
             }
-            ipage.pages[i]; //me ubico en la pagina enlazada (nivel 2 de index)
-
-            //2. Ahora para el segundo nivel-------------------
-            while(indexFile.read(reinterpret_cast<char*>(&ipage.pages[i])), sizeof(indexPage)){ //indexo en los indexpage
-                int i=0;
-                while (i < ipage.n && key > indexPage.keys[i]) {
-                    i++; //avanzo mi pagina de index
-                }
-
-                //3. Aca ya me ubico en mi datapage
+            if(key<=r.codigo){
+                end=mid+1;
                 
-                
+            }
+            else if(key>=r.codigo){
+                findpage(mid+1, end, key);
             }
         }
+        //return indexPage.pages[beg];
+        
     }
+    
+    template <typename T>
+    vector<Record> search(T key){
+        
+
+    }
+
+    };
     /*
     void add(Record record) {
         std::ifstream file(dfile, ios::app | ios::binary | fstream::out);
@@ -133,7 +144,6 @@ namespace isam{
     }
     */
 
-};
 
 int main(){
     isam::IndexPage<int> n;
