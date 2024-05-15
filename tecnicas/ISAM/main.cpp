@@ -87,38 +87,67 @@ namespace isam{
         ~DataPage(){};
     }; // MD*sizeof(Record) + sizeof(int) + sizeof(long) = TAM_PAGE;
 
-    int findpage( int beg, int end, char * key){
+    long findpage(isam::IndexPage<int> ip, char * key){
         ifstream file(ifile, ios::app | ios::binary | fstream::out);
         file.seekg(0, ios::beg);
-        int beg=0;
-        int final= 10; //debería ser indexPage.n -1
+        isam::IndexPage<char[5]> indexPage; //char5 pq codigo es de 5 char
+        
+        int beg=1;
+        int final=indexPage.n-1;
 
         while(beg<=final) {
-            Record r;
-            
+            int i=0;
             int mid=(beg+final)/2;
-            int ant=mid;
-            file.seekg(mid);
-            file.read((char*)&r, sizeof(Record));
-            if(key==r.codigo){
+            
+            file.seekg(mid*sizeof(isam::IndexPage<char[5]>) + sizeof(int), ios::beg);
+            file.read(reinterpret_cast<char*>(&indexPage), sizeof(isam::IndexPage<char[5]>));
+            
+            if(key==indexPage.keys[mid]){
                 return mid;
                 file.close();
             }
-            if(key<=r.codigo){
-                end=mid+1;
-                
+            if(key<=indexPage.keys[mid]){
+                final=mid-1;
             }
-            else if(key>=r.codigo){
-                findpage(mid+1, end, key);
+            else if(key>=indexPage.keys[i]){
+                beg=mid+1;
             }
         }
-        //return indexPage.pages[beg];
+        return indexPage.pages[beg];
         
     }
     
     template <typename T>
     vector<Record> search(T key){
+        //paso a nivel 2
+        long p2=findpage(indexPage.pages[beg], key); 
+
+        //tengo q acceder a datafile de mi p2
+        ifstream file(dfile, ios::app | ios::binary | fstream::out);
         
+        isam::DataPage dataPage;
+        file.seekg(0, ios::beg);
+        int beg=0;
+        int final=file.n-1;
+
+        while(beg<=final) {
+            int i=0;
+            int mid=(beg+final)/2;
+            
+            file.seekg(mid*sizeof(isam::DataPage), ios::beg);
+            file.read(reinterpret_cast<char*>(&DataPage), sizeof(isam::DataPage));
+            
+            if(key==dataPage.records[mid]){
+                return mid;
+                file.close();
+            }
+            if(key<=dataPage.record[mid]){
+                final=mid-1;
+            }
+            else if(key>=dataPage.record[mid]){
+                beg=mid+1;
+            }
+        }
 
     }
 
