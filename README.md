@@ -27,3 +27,28 @@ Para cada técnica, se debe implementó las siguientes funciones:
 ### DataSet
 Hemos usado un dataset de [FoodData Central](https://www.kaggle.com/datasets/pranavkarnani/fooddata-central). Esta elección fue debida a los siguientes factores:
 
+- **Complejidad de los datos**: Ofrece una variedad de información sobre alimentos, como ID, propietario de la marca, descripción, ingredientes, código GTIN/UPC y tamaño de la porción.
+
+- **Tamaño adecuado**: El conjunto de datos es lo suficientemente grande para pruebas exhaustivas y evaluaciones de rendimiento.
+
+- **Relaciones entre datos**: Permite explorar relaciones entre diferentes alimentos y marcas, lo que es útil para entender las estructuras de datos.
+
+- **Variedad de consultas**: Con ingredientes, códigos de barras y descripciones, se pueden realizar diversas consultas para probar las funciones implementadas en las técnicas de organización de archivos.
+
+```c++
+struct FoodRecord {
+    int fdc_id; //primary key
+    char brand[50];
+    char description[30];
+    char ingredients[110];
+    float servingsize;}
+```
+
+|       Campo       |                         Descripción                          |
+|:-----------------:|:------------------------------------------------------------:|
+|   ```fdc_id```    |                   Id único de cada registro.                 |
+|    ```brand```    |        Marca del producto, puede ser algún corporativo       |
+| ```description``` |                   Descripción del producto                   |
+| ```ingredients``` |                   Ingredientes del producto                  |
+| ```servingsize``` |               Tamaño de la porción del producto              |
+
