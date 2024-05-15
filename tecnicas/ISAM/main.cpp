@@ -87,29 +87,30 @@ namespace isam{
         ~DataPage(){};
     }; // MD*sizeof(Record) + sizeof(int) + sizeof(long) = TAM_PAGE;
 
-    long findpage(isam::IndexPage<int> ip, char * key){
+    template <typename T>
+    long findpage(T key){
         ifstream file(ifile, ios::app | ios::binary | fstream::out);
-        file.seekg(0, ios::beg);
-        isam::IndexPage<char[5]> indexPage; //char5 pq codigo es de 5 char
+        isam::IndexPage<T> ip; 
         
-        int beg=1;
+        int beg=0;
         int final=indexPage.n-1;
 
+        file.seekg(4+1, ios::beg);
+        file.read(sizeof(IndexPage), ip);
+
+        //hago mi binary
         while(beg<=final) {
             int i=0;
             int mid=(beg+final)/2;
             
-            file.seekg(mid*sizeof(isam::IndexPage<char[5]>) + sizeof(int), ios::beg);
-            file.read(reinterpret_cast<char*>(&indexPage), sizeof(isam::IndexPage<char[5]>));
-            
-            if(key==indexPage.keys[mid]){
+            if(key==ip.keys[mid]){
                 return mid;
                 file.close();
             }
-            if(key<=indexPage.keys[mid]){
+            if(key<=ip.keys[mid]){
                 final=mid-1;
             }
-            else if(key>=indexPage.keys[i]){
+            else if(key>=ip.keys[i]){
                 beg=mid+1;
             }
         }
@@ -119,34 +120,43 @@ namespace isam{
     
     template <typename T>
     vector<Record> search(T key){
-        //paso a nivel 2
-        long p2=findpage(indexPage.pages[beg], key); 
+        //obtengo mi ip2
+        long p2=findpage(key); 
+        //paso a mi segundo nivel
+        file.seekg(p2*(sizeof(indexPage)+1), ios::beg); 
+        file.read(ip,sizeof(IndexPage))
+
+        //aplico binary de mi 2ndo nivel
+        while(beg<=final) {
+            int i=0;
+            int mid=(beg+final)/2;
+            
+            if(key==ip.keys[mid]){
+                return mid;
+                file.close();
+            }
+            if(key<=ip.keys[mid]){
+                final=mid-1;
+            }
+            else if(key>=ip.keys[i]){
+                beg=mid+1;
+            }
+        }
+        long ip3=indexPage.pages[beg]; 
 
         //tengo q acceder a datafile de mi p2
         ifstream file(dfile, ios::app | ios::binary | fstream::out);
         
         isam::DataPage dataPage;
-        file.seekg(0, ios::beg);
+        file.seekg((4+1)+sizeof(DataPage)*ip3, ios::beg);
         int beg=0;
         int final=file.n-1;
 
-        while(beg<=final) {
-            int i=0;
-            int mid=(beg+final)/2;
-            
-            file.seekg(mid*sizeof(isam::DataPage), ios::beg);
-            file.read(reinterpret_cast<char*>(&DataPage), sizeof(isam::DataPage));
-            
-            if(key==dataPage.records[mid]){
-                return mid;
-                file.close();
-            }
-            if(key<=dataPage.record[mid]){
-                final=mid-1;
-            }
-            else if(key>=dataPage.record[mid]){
-                beg=mid+1;
-            }
+        
+        //busco mi key por medio del encadenamiento
+        int i=0;
+        while(dataPage.records[i].nextpointer!=key){
+            dataPage.records[i]=dataPage[i].nextpointer; 
         }
 
     }
