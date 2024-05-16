@@ -148,7 +148,7 @@ namespace isam{
         ifstream file(dfile, ios::app | ios::binary | fstream::out);
         
         isam::DataPage dataPage;
-        file.seekg((4+1)+sizeof(DataPage)*ip3, ios::beg);
+        file.seekg((4+1)+(1+sizeof(DataPage))*ip3, ios::beg);
         int beg=0;
         int final=file.n-1;
 
@@ -162,6 +162,45 @@ namespace isam{
     }
 
     };
+
+    /*
+    add(r, k):
+        traer ip0 a memoria ram
+        si ip0.n != ip0.MI - 1:
+            crear ipx, donde x es la cantidad de index pages en el archivo de indexes
+            añadir k al final de ip0.keys
+            ip0.pages[at k] = x
+            sort ip0.keys, manteniendo la relación de keys y nextpages
+            ir a ipx // nivel 2
+            añadir k a ipx.keys
+            crear dpx, donde x es la cantidad de data pages en el archivo de data
+            ipx.pages[at k] = x
+            ir a dpx y añadir r // nivel 3
+            escribir dpx
+        else:
+            busqueda binaria para encontrar primer mayor key a k, retorna x
+            traer ipx a memoria ram
+            si ipx.n != ipx.MI - 1:
+                crear dpx, donde x es la cantidad de data pages en el archivo de data
+                ipx.pages[at k] = x
+            else:
+                busqueda binaria para encontrar primer mayor key a k, retorna x
+                traer dpx a memoria ram
+                si dpx not full
+                    añadir r a dpx (usando free list) // nivel 3
+                    escribir dpx
+                else:
+                    crear dpe, donde e es la cantidad de data pages en el archivo de data
+                    lastEle = el ultimo elemento en dpx
+                    lastEle.nextP = dpe
+                    añadir record a dpe
+                    escribir dpe
+        
+
+
+    */
+
+
     /*
     void add(Record record) {
         std::ifstream file(dfile, ios::app | ios::binary | fstream::out);
