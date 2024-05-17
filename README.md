@@ -78,3 +78,10 @@ struct FoodRecord {
 ##### Search
 ##### Seacrh for Range
 ##### Delete
+
+## Experimentación
+
+## Integrantes
+|                    **Bihonda Epiquien Rodas**                   |                          **Paola Maguiña**                          |                         **Camila Acosta**                          |                         **Melanie Cortes**                         |                       **Sofía Herrera**                       |
+|:---------------------------------------------------------------:|:-------------------------------------------------------------------:|:-------------------------------------------------------------------:|:------------------------------------------------------------------:|:-------------------------------------------------------------:|
+| <a href="https://github.com/bihoepiro" target="_blank">`github.com/bihonda`</a> | <a href="https://github.com/paolamag" target="_blank">`github.com/paolamag`</a> | <a href="https://github.com/camilaacosta" target="_blank">`github.com/camilaacosta`</a> | <a href="https://github.com/melaniecortes" target="_blank">`github.com/melanie1512`</a> | <a href="https://github.com/sofiaherra" target="_blank">`github.com/sofiaherra`</a> |
