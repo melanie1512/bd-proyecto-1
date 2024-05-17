@@ -7,6 +7,13 @@ A través de crear y manipular un DataSet usando técnicas de organización de a
 
 ### Objetivos
 
+1. **Comprender Técnicas de Organización de Archivos**:
+   - Estudiar archivos secuenciales/AVL, ISAM y hashing extensible.
+
+2. **Implementar Operaciones Básicas**:
+   - Desarrollar algoritmos de inserción, búsqueda y eliminación para cada técnica.
+
+
 ### Organización de Archivos
 
 Las técnicas usadas para este proyecto son las siguientes:
@@ -52,3 +59,22 @@ struct FoodRecord {
 | ```ingredients``` |                   Ingredientes del producto                  |
 | ```servingsize``` |               Tamaño de la porción del producto              |
 
+## Técnicas Utilizadas
+
+### AVL File
+##### Insert
+##### Search
+##### Seacrh for Range
+##### Delete
+
+### ISAM-Sparse Index
+##### Insert
+##### Search
+##### Seacrh for Range
+##### Delete
+
+### Extendible Hash
+##### Insert
+##### Search
+##### Seacrh for Range
+##### Delete
