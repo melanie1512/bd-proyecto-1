@@ -558,6 +558,62 @@ La función `search` está diseñada para buscar un registro en un archivo que s
 
 ### Extendible Hash
 #### Insert
+Al insertar un Record en nuestro ExtendibleHash seguimos pasos para caso posible: Sin overflow, con overflow o con encadenamiento.
+Primero obtenemos el hash_index de la key del Record, para así poder obtener el bucked_id según ese hash, teniendo en cuenta la profundidad del hash (que sea <= D (profundidad global)).
+```cpp
+ void insert(Record<T> record) {
+    vector<char> rhindex = fhash(record.key);
+    int bkid = get_bucket_id(rhindex, adressT);
+.
+.
+.
+}
+```
+Con la función get_bucket_id buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo "address_table.dat".
+El cual tiene la estructura:
+Ejemplo:
+|   HashIndex   |  Buckect_id  |
+|:-------------:|:------------:|
+|        0      |       0      |
+|        01     |       1      |
+|        11     |       2      |
+
+```cpp
+int get_bucket_id(vector<char> hindex, string adressT) {
+    int id; 
+    ifstream adressTFile(adressT, ios::binary);
+    if (!adressTFile) {
+        cerr << "No se pudo abrir el archivo " << adressT << " para lectura." << endl;
+        return -1;
+    }
+
+    int cant_arecords;
+    adressTFile.seekg(0);
+    adressTFile.read((char*)&cant_arecords, sizeof(int));
+
+    AdressRecord temp;
+    for (int i = 0; i < cant_arecords; ++i) {
+        temp.hash_index.clear();
+        for (int j = 0; j < D; ++j) {
+            char ch;
+            adressTFile.read(&ch, sizeof(char));
+            temp.hash_index.push_back(ch);
+        }
+        adressTFile.read((char*)&temp.bucket_id, sizeof(int));
+        if (same_hindex(temp.hash_index, hindex)) {
+            adressTFile.close();
+            id = temp.bucket_id;
+            break; // Bucket ID found, break the loop
+        }
+    }
+
+    adressTFile.close();
+    return id;
+}
+```
+
+
+
 <p align="center">
   <img src="imagenes/eh.insertar.png" alt="Insert - EH">
 </p>
