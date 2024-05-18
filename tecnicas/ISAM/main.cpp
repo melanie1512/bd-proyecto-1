@@ -290,10 +290,90 @@ namespace isam{
                     lastEle.nextP = dpe
                     añadir record a dpe
                     escribir dpe
-        
-
 
     */
+   template <typename T>
+    vector <isam::IndexPage<T>> rangesearchprev(T kinicio, T kfinal){
+    //empiezo con mi ip0
+    ifstream file(ifile, ios::app | ios::binary | fstream::out);
+        isam::IndexPage<T> ip; 
+        vector <isam::IndexPage<T>> vindex_primernivel; 
+        //en este vector guardaré los indexpages que estan en el rango
+        
+        int beg=0;
+        int final=ip.n-1;
+
+        file.seekg(4+1, ios::beg);
+        file.read(sizeof(IndexPage), ip);
+
+        //hago mi binary
+        while(beg<=final) {
+            int i=0;
+            int mid=(beg+final)/2;
+            
+            //if(ip.keys[mid]==kinicio){
+            //    return mid;
+            //    file.close();
+            //}
+            //not sure de estas condiciones
+            if(ip.keys[mid]>=kinicio && ip.keys[mid]<=kfinal){
+                vindex_primernivel.push_back(ip.keys[mid]);
+            }
+            else if(ip.keys[mid]>=kinicio && ip.keys[mid]>=kfinal){
+                final=mid-1;
+            }
+            else if(ip.keys[mid]<=kinicio && ip.keys[mid]<=kfinal){ 
+                beg=mid+1;
+            }
+        }
+        return vindex_primernivel;
+   };
+    template <typename T>
+   vector<Record> rangesearch( T kinicio, T kfinal){
+        vector <Record> vfinal;
+        vector <IndexPage<T>> vindex_primernivel= rangesearchprev(kinicio, kfinal);// voy al next ip
+        for(int i: vindex_primernivel){ //aca guardo los keys de primer nivel
+            for (int element: vindex_primernivel[i]){ //aca itero sobre los elementos del primer nivel
+                if(element=0){ //si es el primer elemento tengo que chequear desde dónde agregar
+                    //entro a su dp
+                    fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+                    //not sure de como seek aca
+                    file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i], ios::beg);
+                    isam::DataPage dp; 
+
+                    int beg=0;
+                    int final= dp.n-1;
+                    //aplico binary para saber desde cuál key añadir
+                    while(beg<=final) {
+                        int mid=(beg+final)/2;
+                        if(kinicio==dp.records[mid]){
+                            vfinal.push_back(dp.records[mid]);//he encontrado el primer valor
+                            break;
+                        }
+                        if(kinicio<=dp.record[mid]){
+                            final=mid-1;
+                        }
+                        else if(kinicio>=dp.record[mid]){
+                            beg=mid+1;
+                        }
+                    }
+                    //empezare a copiar todos hasta llegar al vindex_segundo nivel final
+                    while(beg<=final){
+                        vfinal.push_back(dp.records[beg]);
+                        beg++;
+                    }
+                
+                }
+                else if(element==vindex_primernivel[i].n){
+
+                }
+            }
+            vector <IndexPage<T>> vindex_segundonivel;
+            for (int element: )
+        }
+        
+   };
+   
 
 
 int main(){
