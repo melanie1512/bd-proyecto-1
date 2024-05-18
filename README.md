@@ -362,67 +362,64 @@ La función `remove` está diseñada para eliminar un registro de un archivo que
 1. **Caso base**
     - En nuestro caso base es cuando el indexpage no está lleno, para esto creo un next indexpage en el cual escribo el record e igualmente para el datapage
  ```cpp
-file.seekg(4+1, ios::beg); 
-if(ip0.n!=ip0.MI-1){ 
-isam::IndexPage<T> ipn; 
-ip0.pages[-1]=ipn;
-sort();
- file.seekg(ipn*(sizeof(IndexPage)+1), ios::beg); 
- file.write(reinterpret_cast<const char*>(&k), sizeof(Record));
-
-
+   file.seekg(4+1, ios::beg); 
+   if(ip0.n!=ip0.MI-1){ 
+   isam::IndexPage<T> ipn; 
+   ip0.pages[-1]=ipn;
+   sort();
+    file.seekg(ipn*(sizeof(IndexPage)+1), ios::beg); 
+    file.write(reinterpret_cast<const char*>(&k), sizeof(Record));
 ```
 - Luego procedo a crear mi datapage para añadir el record en el datapage 
-```
- ifstream dfile(dfile, ios::app | ios::binary | fstream::out);
- isam::DataPage dpn;
- dfile.seekg((4+1)+(1+sizeof(DataPage))*ipn, ios::beg);
- dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+```cpp
+    ifstream dfile(dfile, ios::app | ios::binary | fstream::out);
+    isam::DataPage dpn;
+    dfile.seekg((4+1)+(1+sizeof(DataPage))*ipn, ios::beg);
+    dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
  ```
 2. **Caso general**
     - Hago un binary search para hallar el mayor key a k y obtener la posición donde insertar mediante binarysearch aprovechando que el indexpage está ordenado para poder ubicar mejor key en forma logarítmica.
-```
-file.seekg(4+1, ios::beg);
-file.read(ip0,sizeof(IndexPage));
-            
-while(beg<=final) {
-    int i=0;
-    int mid=(beg+final)/2;
-            
-    if(k==ip0.keys[mid]){
-        return mid;
-        file.close();}
-    if(k<=ip0.keys[mid]){
-        final=mid-1;}
-   else if(k>=ip0.keys[mid]){
-        beg=mid+1; }
-    }
-long x=ip0.pages[beg]; 
+```cpp
+   file.seekg(4+1, ios::beg);
+   file.read(ip0,sizeof(IndexPage));
+               
+   while(beg<=final) {
+       int i=0;
+       int mid=(beg+final)/2;
+               
+       if(k==ip0.keys[mid]){
+           return mid;
+           file.close();}
+       if(k<=ip0.keys[mid]){
+           final=mid-1;}
+      else if(k>=ip0.keys[mid]){
+           beg=mid+1; }
+       }
+   long x=ip0.pages[beg]; 
 ```
 3. **Uso del 2ndo nivel de IndexPage**
     - Para esto, obtengo la posición actual del binary search del paso 2 y me posiciono en el 2ndo nivel de IndexPage y uso su dataPage
-```
-file.seekg((4+1)+(x*(sizeof(IndexPage)+1)), ios::beg); 
-isam::IndexPage <T> ipx;
-if(ipx.n!=ipx.MI-1){
-    isam::DataPage dpn; 
-    ipx.pages[x]=dpn;}
-
-else{
-    fstream dfile(dfile, ios::app | ios::binary | fstream::out);
-    file.seekg((4+1)+(1+sizeof(DataPage))*ipx, ios::beg);
-    isam::DataPage dp; 
-            
-    int beg=0;
-    int final=dp.n;
-    //{...} Realizo un binary search para hallar el primer mayor a k y
-    //obtener la posición de página
-    long dpn=dp.record[beg]; 
+```cpp
+   file.seekg((4+1)+(x*(sizeof(IndexPage)+1)), ios::beg); 
+   isam::IndexPage <T> ipx;
+   if(ipx.n!=ipx.MI-1){
+       isam::DataPage dpn; 
+       ipx.pages[x]=dpn;}
+   
+   else{
+       fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+       file.seekg((4+1)+(1+sizeof(DataPage))*ipx, ios::beg);
+       isam::DataPage dp; 
+               
+       int beg=0;
+       int final=dp.n;
+       //{...} Realizo un binary search para hallar el primer mayor a k y
+       //obtener la posición de página
+       long dpn=dp.record[beg]; 
 ```
 - Ahora uso la datapage encontrada mediante el binary-search del paso anterior para ubicar el registro dentro del datapage. Hay que considerar que para la función insert estamos usando `free list` para tomar en cuenta un espacio de nextdel
 
-```
-
+```cpp
 if(dp.n!=dp.MD-1){
     int pos=dp.nextdel;
     dfile.seekg((4+1)+(1+sizeof(DataPage))*pos, ios::beg);
@@ -434,6 +431,9 @@ else{
     dpe.write(reinterpret_cast<const char*>(&k), sizeof(Record)); }
     }
 ```
+##### Consideraciones 
+- **Lectura y Escritura Binaria en IndexPage**: Debido a que el IndexPage está ordenado, es efectivo el uso de búsqueda binaria tanto para el 1er nivel y el 2do.
+- **Inserción en el DataPage**: En cuanto la implementación del datapage, debudo a que no será ordenado, se maneja de como un heapfile, es decir que todos los nuevos Records se insertan al final. Además, se toma en cuenta la implementación de un freelist para insertar donde hay espacios de registros eliminados y tener mejor uso de espacio.
 
 #### Search
 La función `search` está diseñada para buscar un registro en un archivo que se encuentra dentro de un datapage utilizando una clave específica. Devuelve el registro encontrado o un registro inválido si no se encuentra la clave.
@@ -485,6 +485,9 @@ La función `search` está diseñada para buscar un registro en un archivo que s
         while(dataPage.records[i]!=key){
             i++;}
      ```
+##### Consideraciones 
+- **Búsqueda Binaria:** Observamos que al ser un IndexPage, tomamos ventaja que está organizado en sus 2 niveles
+- **Búsqueda lineal**: La única parte donde del ISAM donde la búsqueda es lineal es el Datapage dado que este no está ordenado.
 
 
 #### Search for Range
@@ -546,6 +549,9 @@ La función `search` está diseñada para buscar un registro en un archivo que s
             j++;}
     }
 ```
+##### Consideraciones 
+- **Uso de vectores:**: Se guardaron los IndexPages que pertenecían al rango de las llaves para luego poder verificar sus elementos del vector. Posterioremente se itera dentro de cada IndexPage para acceder a las páginas del segundo nivel que estas dirigen. 
+- **3 Casos de búsqueda por rango**: Tomamos en cuenta 3 casos, en el cual, el primero es para encontrar nuestra primera llave a buscar. El 2do caso es para copiar todos los elementos que se encuentren dentro del rango. El último es para ubicar nuestro último elemento a insertar en el vector.
 
 
 #### Remove
