@@ -529,6 +529,26 @@ La función `remove` está diseñada para eliminar un registro de un archivo de 
    - Esta clase se encarga de escanear la entrada de texto y generar tokens. Utiliza un conjunto de reglas para identificar y clasificar diferentes partes del texto en tokens de acuerdo con la gramática SQL.
 
 En resumen, el código implementa un parser SQL básico junto con un escáner que analiza una secuencia de tokens de entrada y realiza acciones específicas según las declaraciones SQL encontradas.
+ ## Gramática del Parser
+ La gramática del parser SQL está definida en formato BNF (Backus-Naur Form) como se muestra a continuación:
+ ```
+<statement> ::= <create_table> | <select> | <insert> | <delete>
+
+<create_table> ::= "CREATE" "TABLE" <id> "FROM" "FILE" <value> "USING" "INDEX" "(" <index_type> ")" <id>
+<index_type> ::= "AVL" | "ISAM" | "EXTENDIBLE"
+
+<select> ::= "SELECT" "ALL" "FROM" <id> "WHERE" <condition>
+
+<insert> ::= "INSERT" "INTO" <id> "VALUES" "(" <value_list> ")"
+<value_list> ::= <value> | <value> ":" <value_list>
+
+<delete> ::= "DELETE" "FROM" <id> "WHERE" <condition>
+
+<condition> ::= <id> "=" <value> | <id> "BETWEEN" <value> "AND" <value>
+
+<id> ::= /*identificador de la tabla, primary key. /
+<value> ::= /*strings o numeros */
+```
 
 
 ## Experimentación
