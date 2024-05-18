@@ -364,7 +364,14 @@ La función `remove` está diseñada para eliminar un registro de un archivo que
 
 ### Extendible Hash
 #### Insert
+<p align="center">
+  <img src="imagenes/eh.insertar.png" alt="Insert - EH">
+</p>
+
 #### Search
+<p align="center">
+  <img src="imagenes/eh.search.png" alt="Search - EH">
+</p>
 La función `search` está diseñada para buscar registros en un archivo de hash utilizando una clave específica. La función devuelve un vector de registros que coinciden con la clave proporcionada. 
 
 ##### Descripción del Proceso
@@ -415,6 +422,11 @@ La función `search` está diseñada para buscar registros en un archivo de hash
 - **Robustez**: El código incluye comprobaciones para manejar errores, como la imposibilidad de abrir el archivo de hash.
 
 #### Remove
+
+<p align="center">
+  <img src="imagenes/eh.eliminar.png" alt="Remove - EH">
+</p>
+
 La función `remove` está diseñada para eliminar un registro de un archivo de hash utilizando una clave específica. La función devuelve un valor booleano que indica si la eliminación fue exitosa. 
 
 ##### Descripción del Proceso
