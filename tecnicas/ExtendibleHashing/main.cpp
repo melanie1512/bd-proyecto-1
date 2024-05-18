@@ -38,25 +38,35 @@ std::vector<char> stringToVector(const std::string &str) {
 
 template<typename T>
 struct Record {
-    T key;
-    char nombre[12];
-    int ciclo; // 4 bytes
+    int fdc_id; //primary key fdc_id
+    char brand[50];
+    char description[30];
+    char ingredients[110];
+    float servingsize;
     Record() {};
-    Record(T key) {
-        this->key = key;
+    Record(int fdc_id) {
+        this->fdc_id = fdc_id;
     }
-    Record(T key, const char* nom, int ciclo) : key(key), ciclo(ciclo) {
-        strncpy(nombre, nom, sizeof(nombre) - 1);
-        nombre[sizeof(nombre) - 1] = '\0'; // Asegurar que esté terminado en null
+    Record(int id, const string& b, const string& d, const string& i, float s) {
+        fdc_id = id;
+        strncpy(brand, b.c_str(), sizeof(brand) - 1);
+        strncpy(description, d.c_str(), sizeof(description) - 1);
+        strncpy(ingredients, i.c_str(), sizeof(ingredients) - 1);
+        brand[sizeof(brand) - 1] = '\0';
+        description[sizeof(description) - 1] = '\0';
+        ingredients[sizeof(ingredients) - 1] = '\0';
+        servingsize = s;
     }
-
-     void print() const {
-        cout << "Key: " << key << endl;
-        cout << "Nombre: " << nombre << endl;
-        cout << "Ciclo: " << ciclo << endl;
+    void print() const {
+        cout << "Key: " << fdc_id << endl;
+        cout << "Brand: " << brand << endl;
+        cout << "Description: " << description << endl;
+        cout << "Ingredients: " << ingredients << endl;
+        cout << "Serving size: " << servingsize << endl;
     }
-
 };
+
+
 
 // Overloads for writing Bucket and AdressRecord objects
 struct AdressRecord {
@@ -176,7 +186,7 @@ struct Bucket {
         //como tiene size 0 los dos primeros buckets no se lee
 
         for (int i = 0; i < size; i++) {
-             cout << setw(fb) << (this->records[i]).key;
+             cout << setw(fb) << (this->records[i]).fdc_id;
         }
 
         cout << setw(3) << this->next_bucket;
@@ -253,7 +263,7 @@ public:
               for(int j=0;j<reading_bucket.size;j++)
               {
                  iHashfile.seekg(i*(16+fb*sizeof(Record<T>))+4+j*sizeof(Record<T>), ios::beg);
-                 iHashfile.read((char*)&((reading_bucket.records[j]).key), sizeof((reading_bucket.records[j]).key));
+                 iHashfile.read((char*)&((reading_bucket.records[j]).fdc_id), sizeof((reading_bucket.records[j]).fdc_id);
 
               }
 
@@ -419,7 +429,7 @@ public:
     }
    void insert(Record<T> record) {
     //rhindex : record hash index
-    vector<char> rhindex = fhash(record.key); // T
+    vector<char> rhindex = fhash(record.fdc_id); // T
     int bkid = get_bucket_id(rhindex, adressT);
 
     // Abre el archivo para lectura y escritura
@@ -453,7 +463,7 @@ public:
         
         //Escribir el nuevo record
         hashfile.seekp(bucket_position + 4 + (bs-1)*sizeof(Record<T>), ios::beg);
-        hashfile.write(reinterpret_cast<char*>(&record.key), sizeof(record.key));
+        hashfile.write(reinterpret_cast<char*>(&record.fdc_id), sizeof(record.fdc_id));
        
         
         cout << "Registro insertado correctamente." << endl;
@@ -476,7 +486,7 @@ public:
             hashfile.seekp(bucket_position + 8 + fb * sizeof(Record<T>), ios::beg);
             hashfile.write(reinterpret_cast<char*>(&bs), sizeof(int));
             for(T tkey:mykeys){
-              insert_(key);
+              insert_(tkey);
             }
         
          lD++;
@@ -542,7 +552,7 @@ vector<Record<T>> search(T key) {
 
         while (true) { 
             for (int i = 0; i < bucket.size; i++) { 
-                if (bucket.records[i].key == key) { // cuando se encuentra el registro
+                if (bucket.records[i].fdc_id == key) { // cuando se encuentra el registro
                     result.push_back(bucket.records[i]); // añadirlo al vector de resultados
                 }
             }
@@ -580,7 +590,7 @@ vector<Record<T>> search(T key) {
         // buscar el registro en el bucket
         int recordIndex = -1; // para ponerlo cuando se elimine
         for (int i = 0; i < bucket.size; i++) {
-            if (bucket.records[i].key == key) {
+            if (bucket.records[i].fdc_id == key) {
                 recordIndex = i;
                 break;}
         }
@@ -639,4 +649,3 @@ vector<Record<T>> search(T key) {
     }
 
 };
-
