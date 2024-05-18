@@ -569,7 +569,18 @@ struct AdressRecord {
     int d = 0;
 //...
 ```
+#### Bucket  
+Estructura donde guardamos una cantidad máxima de *fb* Records y datos necesarios para su inserción, búsqueda y eliminación, como lo son: bucket_id, next_bucket, size, etc.  
 
+```cpp
+template<typename T>
+struct Bucket {
+    int bucket_id;
+    Record<T> records[fb];
+    int next_bucket;
+    int size;
+    int local_d;
+```
 
 #### Insert
 Al insertar un Record en nuestro **ExtendibleHash** seguimos pasos para caso posible: sin overflow, con overflow o con encadenamiento. 
