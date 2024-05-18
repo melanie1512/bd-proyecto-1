@@ -557,6 +557,28 @@ La función `search` está diseñada para buscar un registro en un archivo que s
 #### Remove
 
 ### Extendible Hash
+Estructuras necesarias para la implementación:
+#### AdressRecord  
+Nos ayuda a mantener la relación entre hash_index y bucket_id necesaria para el archivo **adress_table.dat**.  
+```cpp
+struct AdressRecord {
+    vector<char> hash_index; // tamaño D, incializado en los constructores
+    int bucket_id = 0;
+    int d = 0;
+//...
+```
+
+|               Estructura                  |            Objetivo            |
+|:-----------------------------------------:|:------------------------------:|
+|      ```cpp
+struct AdressRecord {
+    vector<char> hash_index; // tamaño D, incializado en los constructores
+    int bucket_id = 0;
+    int d = 0;
+//...
+```     |    Nos ayuda a mantener la relación entre hash_index y bucket_id necesaria para el archivo **adress_table.dat**.          |
+
+
 #### Insert
 Al insertar un Record en nuestro **ExtendibleHash** seguimos pasos para caso posible: sin overflow, con overflow o con encadenamiento. 
 
@@ -675,6 +697,51 @@ else {
            }
            //sabemos que en la reinsercion no habra overflow, etonces solo insertamos en ambos buckets
            int bkid_n = split(rhindex);
+```
+Aquí hicimos una llamada a la función .split() de la struct del ExtendibleHashing, la cual retorna el bucket_id del nuevo bucket generado al splitear, ya que por dentro al hash_index que se mantiene le desbloquea un bit por delante el cual es '0', y el nuevo AdressRecord tiene el mismo hash_index, con la diferencia de en lugar de desbloquear el '0', desbloquea el '1', ya que así lo requiere el split.
+```cpp
+//split...
+int split(vector<char> rhindex){
+    ifstream iAdressT(adressT, ios::binary);
+    iAdressT.seekg(0, ios::beg);
+    int cant_b_hi = 0;
+    iAdressT.read((char*)&cant_b_hi, sizeof(int));
+    AdressRecord temp;
+    for(int i=0;i < cant_b_hi;i++){
+        for (int j = 0; j < D; j++) {
+            iAdressT.read((char*)&temp.hash_index[j], sizeof(char));
+        }
+        iAdressT.read((char*)&temp.bucket_id, sizeof(int));
+        if(same_hindex(temp.hash_index, rhindex)){
+          //encontró el adressrecord a splitear
+          break;
+
+        }
+    }
+    iAdressT.close();
+    //nos quedamos con temp
+    cant_b_hi++;
+    AdressRecord nuevo = temp.splitAdress(cant_b_hi);
+    //escribir ese nuevo adressrecord
+    ofstream oAdressT(adressT, ios::binary | ios::app);
+    //al final
+    for(char ch:nuevo.hash_index)
+    {
+      oAdressT.write(&ch, sizeof(char));
+    }
+    oAdressT.write(reinterpret_cast<char*>(&nuevo.bucket_id), sizeof(int));
+
+    oAdressT.close();
+    //spliteo hecho en adressT
+    //Ahora en hashfile hay que reinsertar, retornamos el bucket id del segundo bucket split.
+    
+     return nuevo.bucket_id;
+   }
+
+
+```
+```cpp
+//insert...
            //le cambiamos el size,
             bs=0;
             hashfile.seekp(bucket_position + 8 + fb * sizeof(Record<T>), ios::beg);
