@@ -580,8 +580,29 @@ struct Bucket {
     int next_bucket;
     int size;
     int local_d;
+//...
 ```
+#### ExtendibleHashing  
+Aquí guardamos los nombres de los dos archivos necesarios para el ExtendibleHashing: hashfile.dat y adress_table.dat, los cuales se inicializan en los constructores si es que no existen, crea los dos buckets necesarios para empezar:   
 
+|   HashIndex   |  Buckect_id  |
+|:-------------:|:------------:|
+|        0      |       0      |
+|        1      |       1      |
+
+Y si los archivos ya existian, por la persistencia de datos, pues el constructor los lee y almacena datos importantes como la cantidad de buckets sin overlflow y la cantidad de buckets con overflow.  
+
+```
+template<typename T>
+class ExtendibleHashing {
+private:
+    string hashfile;
+    string adressT;
+    int n_buckets;
+    int n_overflow;
+//...
+```
+Funciones principales
 #### Insert
 Al insertar un Record en nuestro **ExtendibleHash** seguimos pasos para caso posible: sin overflow, con overflow o con encadenamiento. 
 
