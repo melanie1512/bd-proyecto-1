@@ -569,11 +569,12 @@ Primero obtenemos el *hash_index* de la key del Record, para así poder obtener 
 }
 ```
 Con la función **get_bucket_id** buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo ***address_table.dat***,el cual tiene la estructura: 
-Ejemplo:
+n_buckets: Cantidad de buckets asignados a un hashindex en ***address_table.dat*** 
+n_overflow: Cantidad de buckets con overflow de encadenamiento.
 |   Cabecera    | 
 |:-------------:|
-|   n_buckets   | Cantidad de buckets asignados a un hashindex en ***address_table.dat***
-|   n_overflow  | Cantidad de buckets con overflow de encadenamiento.
+|   n_buckets   | 
+|   n_overflow  | 
 
 |   HashIndex   |  Buckect_id  |
 |:-------------:|:------------:|
@@ -618,6 +619,8 @@ Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para con
 |        0      |   r1,r2,r3   |     -1       |   3   |  1  |
 |        1      |     r5       |     -1       |   1   |  1  |
 |        2      |     r4,r6    |     -1       |   2   |  1  |
+
+**Caso** ***sin overflow :***
 ```cpp
 //insert...
     fstream hashfile(this->hashfile, ios::binary | ios::in | ios::out);
@@ -645,7 +648,6 @@ Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para con
         hashfile.write(reinterpret_cast<char*>(&record.key), sizeof(record.key));
         cout << "Registro insertado correctamente." << endl;
     }
-
 ```
 
 
