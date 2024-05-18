@@ -568,9 +568,12 @@ Primero obtenemos el *hash_index* de la key del Record, para así poder obtener 
 //...
 }
 ```
-Con la función **get_bucket_id** buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo ***address_table.dat***,el cual tiene la estructura: 
-n_buckets: Cantidad de buckets asignados a un hashindex en ***address_table.dat*** 
-n_overflow: Cantidad de buckets con overflow de encadenamiento.
+Con la función **get_bucket_id** buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo ***address_table.dat***,el cual tiene la estructura:   
+
+n_buckets: Cantidad de buckets asignados a un hashindex en ***address_table.dat***.  
+
+n_overflow: Cantidad de buckets con overflow de encadenamiento.  
+
 |   Cabecera    | 
 |:-------------:|
 |   n_buckets   | 
