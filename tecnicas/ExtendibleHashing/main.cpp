@@ -522,5 +522,121 @@ public:
     hashfile.close();
 }
 
+vector<Record<T>> search(T key) {
+        vector<Record<T>> result; // para almacenar reusltados
+        int index = get_bucket_id(fhash(key), adressT); // index del bucket
+        if (index == -1) { 
+            return result; // no hay bucket con ese registro
+        }
+
+        fstream hashfileFile(hashfile, ios::binary | ios::in); 
+        if (!hashfileFile) { 
+            cerr << "no se pudo abrir el archivo " << hashfile << " para lectura." << endl; 
+            return result; 
+        }
+
+        // buscar el bucket
+        hashfileFile.seekg(index * sizeof(Bucket<T>)); 
+        Bucket<T> bucket; 
+        hashfileFile.read((char*)&bucket, sizeof(Bucket<T>));
+
+        while (true) { 
+            for (int i = 0; i < bucket.size; i++) { 
+                if (bucket.records[i].key == key) { // cuando se encuentra el registro
+                    result.push_back(bucket.records[i]); // añadirlo al vector de resultados
+                }
+            }
+            if (bucket.next_bucket != -1) { // si hay otro bucket en la cadena
+                hashfileFile.seekg(bucket.next_bucket * sizeof(Bucket<T>)); 
+                hashfileFile.read((char*)&bucket, sizeof(Bucket<T>)); 
+            } else {
+                break; // no mas buckets
+            }
+        }
+
+        hashfileFile.close(); 
+        return result; 
+    }
+
+    bool eliminar(T key) {
+        // buscar el bucket donde está el registro
+        int index = get_bucket_id(fhash(key), adressT);
+        if (index == -1) {
+            // no hay registro
+            return false;
+        }
+        
+        fstream hashfileFile(hashfile, ios::binary | ios::in | ios::out);
+        if (!hashfileFile) {
+            cerr << "no se pudo abrir el archivo " << hashfile << " para lectura/escritura." << endl;
+            return false;
+        }
+
+        // encontrar el bucket
+        hashfileFile.seekg(index * sizeof(Bucket<T>));
+        Bucket<T> bucket;
+        hashfileFile.read((char*)&bucket, sizeof(Bucket<T>));
+
+        // buscar el registro en el bucket
+        int recordIndex = -1; // para ponerlo cuando se elimine
+        for (int i = 0; i < bucket.size; i++) {
+            if (bucket.records[i].key == key) {
+                recordIndex = i;
+                break;}
+        }
+
+        if (recordIndex == -1) {return false;} // no se encontró el registro 
+
+        // eliminar el registro
+        for (int i = recordIndex; i < bucket.size - 1; i++) {
+            bucket.records[i] = bucket.records[i + 1];
+        }
+        bucket.size--;
+
+        // actualizar el bucket en el archivo
+        hashfileFile.seekp(index * sizeof(Bucket<T>));
+        hashfileFile.write((char*)&bucket, sizeof(Bucket<T>));
+
+        // si el bucket está vacío y es parte de un encadenamiento, eliminarlo
+        if (bucket.size == 0 && bucket.local_d == D) {
+            // buscar el bucket anterior al bucket actual
+            int prevIndex = -1;
+            int currentIndex = index;
+            hashfileFile.seekg(0, ios::end);
+            int fileSize = hashfileFile.tellg();
+            while (currentIndex != -1) {
+                hashfileFile.seekg(currentIndex * sizeof(Bucket<T>));
+                Bucket<T> currentBucket;
+                hashfileFile.read((char*)&currentBucket, sizeof(Bucket<T>));
+                if (currentBucket.next_bucket == index) {
+                    prevIndex = currentIndex;
+                    break;
+                }
+                currentIndex = currentBucket.next_bucket;
+            }
+
+            if (prevIndex != -1) {
+                // eliminar el bucket actual
+                hashfileFile.seekg(index * sizeof(Bucket<T>));
+                Bucket<T> currentBucket;
+                hashfileFile.read((char*)&currentBucket, sizeof(Bucket<T>));
+                int nextIndex = currentBucket.next_bucket;
+                hashfileFile.seekp(prevIndex * sizeof(Bucket<T>) + offsetof(Bucket<T>, next_bucket));
+                hashfileFile.write((char*)&nextIndex, sizeof(int));
+
+                // actualizar la profundidad local del bucket anterior
+                hashfileFile.seekg(prevIndex * sizeof(Bucket<T>) + offsetof(Bucket<T>, local_d));
+                int local_d;
+                hashfileFile.read((char*)&local_d, sizeof(int));
+                local_d--;
+                hashfileFile.seekp(prevIndex * sizeof(Bucket<T>) + offsetof(Bucket<T>, local_d));
+                hashfileFile.write((char*)&local_d, sizeof(int));
+            }
+        }
+
+        hashfileFile.close();
+        return true;
+    }
+
 };
 
