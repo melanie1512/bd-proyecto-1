@@ -358,8 +358,196 @@ La función `remove` está diseñada para eliminar un registro de un archivo que
 
 ### ISAM-Sparse Index
 #### Insert
+
+1. **Caso base**
+    - En nuestro caso base es cuando el indexpage no está lleno, para esto creo un next indexpage en el cual escribo el record e igualmente para el datapage
+ ```cpp
+file.seekg(4+1, ios::beg); 
+if(ip0.n!=ip0.MI-1){ 
+isam::IndexPage<T> ipn; 
+ip0.pages[-1]=ipn;
+sort();
+ file.seekg(ipn*(sizeof(IndexPage)+1), ios::beg); 
+ file.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
+
+```
+- Luego procedo a crear mi datapage para añadir el record en el datapage 
+```
+ ifstream dfile(dfile, ios::app | ios::binary | fstream::out);
+ isam::DataPage dpn;
+ dfile.seekg((4+1)+(1+sizeof(DataPage))*ipn, ios::beg);
+ dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+ ```
+2. **Caso general**
+    - Hago un binary search para hallar el mayor key a k y obtener la posición donde insertar mediante binarysearch aprovechando que el indexpage está ordenado para poder ubicar mejor key en forma logarítmica.
+```
+file.seekg(4+1, ios::beg);
+file.read(ip0,sizeof(IndexPage));
+            
+while(beg<=final) {
+    int i=0;
+    int mid=(beg+final)/2;
+            
+    if(k==ip0.keys[mid]){
+        return mid;
+        file.close();}
+    if(k<=ip0.keys[mid]){
+        final=mid-1;}
+   else if(k>=ip0.keys[mid]){
+        beg=mid+1; }
+    }
+long x=ip0.pages[beg]; 
+```
+3. **Uso del 2ndo nivel de IndexPage**
+    - Para esto, obtengo la posición actual del binary search del paso 2 y me posiciono en el 2ndo nivel de IndexPage y uso su dataPage
+```
+file.seekg((4+1)+(x*(sizeof(IndexPage)+1)), ios::beg); 
+isam::IndexPage <T> ipx;
+if(ipx.n!=ipx.MI-1){
+    isam::DataPage dpn; 
+    ipx.pages[x]=dpn;}
+
+else{
+    fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+    file.seekg((4+1)+(1+sizeof(DataPage))*ipx, ios::beg);
+    isam::DataPage dp; 
+            
+    int beg=0;
+    int final=dp.n;
+    //{...} Realizo un binary search para hallar el primer mayor a k y
+    //obtener la posición de página
+    long dpn=dp.record[beg]; 
+```
+- Ahora uso la datapage encontrada mediante el binary-search del paso anterior para ubicar el registro dentro del datapage. Hay que considerar que para la función insert estamos usando `free list` para tomar en cuenta un espacio de nextdel
+
+```
+
+if(dp.n!=dp.MD-1){
+    int pos=dp.nextdel;
+    dfile.seekg((4+1)+(1+sizeof(DataPage))*pos, ios::beg);
+    dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));  }
+else{
+    isam::DataPage dpe; 
+    isam::DataPage lastelem=dpn.records[-1]; //ultimo elemento
+    lastelem.nextPage=dpe; //su nextpage será el dpe
+    dpe.write(reinterpret_cast<const char*>(&k), sizeof(Record)); }
+    }
+```
+
 #### Search
-#### Seacrh for Range
+La función `search` está diseñada para buscar un registro en un archivo que se encuentra dentro de un datapage utilizando una clave específica. Devuelve el registro encontrado o un registro inválido si no se encuentra la clave.
+
+##### Descripción del Proceso
+
+1. **Binary Search en IndexPage**:
+   - Debido a que el IndexPage está ordenado, se realiza una búsqueda binaria en el primer nivel para hallar el 2do nivel de IndexPage:
+     ```cpp
+     file.read(sizeof(IndexPage), ip);
+
+        while(beg<=final) {
+            int i=0;
+            int mid=(beg+final)/2;
+            
+            if(key==ip.keys[mid]){
+                return mid;
+                file.close();}
+            if(key<=ip.keys[mid]){
+                final=mid-1;}
+            else if(key>=ip.keys[i]){
+                beg=mid+1;}
+        }
+        return ip.pages[beg];
+     ```
+
+2. **Binary Search en 2ndo nivel**:
+   - Primero ubicamos el IndexPage a partir de la página que nos retorno el paso 1 y ubicamos la página del 2ndo nivel perteneciente al indexfile.
+   - Posteriormente se aplica binary search de nuevo
+     
+     ```cpp
+        file.seekg(p2*(sizeof(IndexPage)+1), ios::beg); 
+        file.read(ip,sizeof(IndexPage))
+        //binarysearch del paso 1
+        long ip3=indexPage.pages[beg];
+     ```
+
+3. **Acceso al datapage y obtención de key**:
+   - A partir del ip3 que nos indica la página enlazada del indexPage obtenedremos la ubicación del datapage :
+     ```cpp
+        ifstream file(dfile, ios::app | ios::binary | fstream::out);
+        isam::DataPage dataPage;
+        file.seekg((4+1)+(1+sizeof(DataPage))*ip3, ios::beg);
+        
+     ```
+   - Procedemos a hacer una búsqueda lineal dentro del datapage para hallar la key
+     ```cpp
+        int i=0;
+        while(dataPage.records[i]!=key){
+            i++;}
+     ```
+
+
+#### Search for Range
+1. **Binary Search en IndexPage con llaves de inicio y fin**:
+   - Debido a que el IndexPage está ordenado, se realiza una búsqueda binaria en el primer nivel para hallar el 2do nivel de IndexPage usando las llaves y se insertan los IndexPages que están en el rango:
+     ```cpp
+     isam::IndexPage<T> ip; 
+    vector <isam::IndexPage<T>> vindex_primernivel; 
+    while(beg<=final) {
+            int mid=(beg+final)/2;
+            
+            if(ip.keys[mid]>=kinicio && ip.keys[mid]<=kfinal){
+                vindex_primernivel.push_back(ip.keys[mid]);}
+            else if(ip.keys[mid]>=kinicio && ip.keys[mid]>=kfinal){
+                final=mid-1;}
+            else if(ip.keys[mid]<=kinicio && ip.keys[mid]<=kfinal){ 
+                beg=mid+1;}
+        }
+        return vindex_primernivel;
+        
+     ```
+
+2. **Binary Search en 2ndo nivel y dentro de DataPage**:
+   - A partir del array de IndexPages, iteramos sus elementos y dentro de cada uno para acceder a sus datapages
+     
+     ```cpp
+        for(int i: vindex_primernivel){ //aca guardo los keys de primer nivel
+            for (int element: vindex_primernivel[i]){ 
+            //Itero sobre los elementos del primer nivel (segundo nivel)
+    
+     ```
+    - Para empezar, debemos obtener el índice desde dónde vamos a empezar a copiar los elementos
+    ```
+    if(element=0){ 
+        fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+        file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i][element], ios::beg);
+        isam::DataPage dp; 
+
+        if(vindex_primernivel[i][element]<=kfinal && vindex_primernivel[i][element]>=kinicio){
+            vfinal.push_back(dp.records[j])
+            j++;
+        }
+    ```
+    - El segundo caso, es para los elementos que están pasando el inicial pero aún no están en el último indexPage, para estos, solo los agregamos al vector
+    ```
+    while(j<=final){
+        vfinal.push_back(dp.records[j])
+    }
+    ```
+    - El tercer caso es cuando estamos en el último indexPage, para este tenemos un límite de hasta dónde copiar los elementos
+```
+    else if (element+1>=kfinal){ //si el 2ndo nivel supera mi kfinal
+        fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+        isam::DataPage dp; 
+        file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i][element], ios::beg);
+        int j=0;
+        while(vindex_primernivel[i][element]<=kfinal){
+            vfinal.push_back(dp.records[j])
+            j++;}
+    }
+```
+
+
 #### Remove
 
 ### Extendible Hash
