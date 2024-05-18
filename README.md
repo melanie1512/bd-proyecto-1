@@ -558,8 +558,9 @@ La función `search` está diseñada para buscar un registro en un archivo que s
 
 ### Extendible Hash
 #### Insert
-Al insertar un Record en nuestro ExtendibleHash seguimos pasos para caso posible: Sin overflow, con overflow o con encadenamiento.
-Primero obtenemos el hash_index de la key del Record, para así poder obtener el bucked_id según ese hash, teniendo en cuenta la profundidad del hash (que sea <= D (profundidad global)).
+Al insertar un Record en nuestro **ExtendibleHash** seguimos pasos para caso posible: sin overflow, con overflow o con encadenamiento. 
+
+Primero obtenemos el *hash_index* de la key del Record, para así poder obtener el *bucked_id* según ese hash, teniendo en cuenta la profundidad del hash (que sea <= D (profundidad global)).
 ```cpp
  void insert(Record<T> record) {
     vector<char> rhindex = fhash(record.key);
@@ -567,10 +568,13 @@ Primero obtenemos el hash_index de la key del Record, para así poder obtener el
 //...
 }
 ```
-Con la función get_bucket_id buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo "address_table.dat",el cual tiene la estructura: cabecera (cantidad de buckets con hashindex asignados y cantidad de overflowbuckets por encadenamiento)
+Con la función **get_bucket_id** buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo ***address_table.dat***,el cual tiene la estructura: 
 Ejemplo:
-|   n_buckets   |
-|   n_overflow  |
+|   Cabecera    | 
+|:-------------:|
+|   n_buckets   | Cantidad de buckets asignados a un hashindex en ***address_table.dat***
+|   n_overflow  | Cantidad de buckets con overflow de encadenamiento.
+
 |   HashIndex   |  Buckect_id  |
 |:-------------:|:------------:|
 |        0      |       0      |
