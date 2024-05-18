@@ -15,7 +15,7 @@ A través de crear y manipular un DataSet usando técnicas de organización de a
    - Desarrollar algoritmos de inserción, búsqueda y eliminación para cada método de organización.
    - Comprender la dinámica de interacción entre usuarios y servidores al crear interfaces gráficas (GUI) para la manipulación de bases de datos.
   
-### Resultaods esperados
+### Resultados esperados
 
 1. **Reducción de Accesos a Memoria Secundaria**:
    - Se espera minimizar las lecturas extensas en memoria secundaria al acceder directamente a los datos relevantes a través de índices.
