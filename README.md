@@ -569,11 +569,9 @@ Primero obtenemos el *hash_index* de la key del Record, para así poder obtener 
 }
 ```
 Con la función **get_bucket_id** buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo ***address_table.dat***,el cual tiene la estructura:   
-
 n_buckets: Cantidad de buckets asignados a un hashindex en ***address_table.dat***.  
-
 n_overflow: Cantidad de buckets con overflow de encadenamiento.  
-
+<p align="center">
 |   Cabecera    | 
 |:-------------:|
 |   n_buckets   | 
@@ -584,6 +582,8 @@ n_overflow: Cantidad de buckets con overflow de encadenamiento.
 |        0      |       0      |
 |        01     |       1      |
 |        11     |       2      |
+</p>
+Dentro de esta función hacemos un llamado a la función auxiliar **same_index** la cual nos regresa el booleano de la relación entre el hash_index ingresado y el hash_index relacionado a cada bucket_id en **address_table.dat**.  
 
 ```cpp
 
@@ -600,16 +600,18 @@ int get_bucket_id(vector<char> hindex, string adressT) {
     AdressRecord temp;
     for (int i = 0; i < cant_arecords; ++i) {
         temp.hash_index.clear();
+        //leemos los AdressRecord
         for (int j = 0; j < D; ++j) {
             char ch;
             adressTFile.read(&ch, sizeof(char));
             temp.hash_index.push_back(ch);
         }
         adressTFile.read((char*)&temp.bucket_id, sizeof(int));
+       //si el índice coincide, extraemos el id para retornar : )
         if (same_hindex(temp.hash_index, hindex)) {
             adressTFile.close();
             id = temp.bucket_id;
-            break; // Bucket ID found, break the loop
+            break;
         }
     }
     adressTFile.close();
@@ -617,11 +619,13 @@ int get_bucket_id(vector<char> hindex, string adressT) {
 }
 ```
 Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para conocer en qué situación de inserción nos encontramos, teniendo en cuenta que éste tiene la siguiente estructura:
+<p align="center">
 |   bucket_id   |    Records   | next_bucket  | size  | l_d |
 |:-------------:|:------------:|:------------:|:-----:|:---:|
 |        0      |   r1,r2,r3   |     -1       |   3   |  1  |
 |        1      |     r5       |     -1       |   1   |  1  |
 |        2      |     r4,r6    |     -1       |   2   |  1  |
+</p>
 
 **Caso** ***sin overflow :***
 ```cpp
@@ -641,7 +645,7 @@ Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para con
     hashfile.read(reinterpret_cast<char*>(&bs), sizeof(int));
     if (bs < fb) {
         cout << "Size : " << bs << " hay espacio." << endl;
-        bs++;//aumentamos el size
+        bs++; //aumentamos el size
         int actbs = bs;
         //actualizamos el size del bucket.
         hashfile.seekp(bucket_position + 8 + fb * sizeof(Record<T>), ios::beg);
@@ -652,8 +656,70 @@ Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para con
         cout << "Registro insertado correctamente." << endl;
     }
 ```
+**Caso** ***con  overflow :***  
+En este caso veremos si es posible realizar el split, consultando a las variables globales de nuestra implementación: lD: (local hash_index deph), y D(global deph)
+```cpp
+else {
+        //bucket lleno, ver si se puede splitear
+        if(lD < D){ //si se puede splitear sin encadenamiento
+           //como se hara una reinsercion, extraer los keys de ese bucket para reinsertarlos
+           vector<T> mykeys;
+           T thekey;
+           for(int i=0; i<fb; i++)
+           {
+            hashfile.seekg(bucket_position + 4 + (i*sizeof(Record<T>)), ios::beg);
+            hashfile.read((char*)&thekey, sizeof(T));
+            mykeys.push_back(thekey);
+           }
+           //sabemos que en la reinsercion no habra overflow, etonces solo insertamos en ambos buckets
+           int bkid_n = split(rhindex);
+           //le cambiamos el size,
+            bs=0;
+            hashfile.seekp(bucket_position + 8 + fb * sizeof(Record<T>), ios::beg);
+            hashfile.write(reinterpret_cast<char*>(&bs), sizeof(int));
+            for(T tkey:mykeys){
+              insert_(key);
+            }
+         lD++; //aumentamos la prof local del hash
+         n_buckets++; //aumentamos la cantidad de buckets sin overflow de encadenamiento
+        }
+```
+**Caso** ***con  overflow de encademaiento:***  
+En este caso recorremos en un bucle los *next_bucket* de cada Bucket registrado en **hashfile.dat** para así encontrar el último mainbucket y poder agregar un bucket de overflow.  
+```cpp
+else{
+        //procedemos al encadenamiento
+        //crear nuevo bucket
+        Bucket<T> overflowbucket;
+        Bucket<T> mainbucket;
+        mainbucket.next_bucket=900;
+        //primero al bucket que le corresponde al hashindex del key, verificar que lleguemos al final overflow bucket
+        hashfile.seekg(0, ios::beg);
+        int k=0;
+        while(mainbucket.next_bucket != -1)
+        {
+          hashfile.seekg(i*(16 +fb*sizeof(Record<T>)) + 4 + fb*sizeof(Record<T>) , ios::beg);
+          hashfile.read((char*)&mainbucket.next_bucket, sizeof(int));
+          k++;
+        }
+         //encontro el ultimo bucket para crearle su overflow
+        n_overflow+; //diferencia entre buckets de adressT y hashfile
+        overflowbucket.bucket_id = n_buckets + n_overflow;
 
+        hashfile.seekp(k*(16 +fb*sizeof(Record<T>)) + 4 + fb*sizeof(Record<T>) , ios::beg);
+        hashfile.write((char*)&overflowbucket.bucket_id, sizeof(int));
+        //asignaación
+        overflowbucket.recods[overflowbucket.size] = record;
+        hashfile.seekp(0, ios::app);
+        hashfile.write(reinterpret_cast<char*>(&overflowbucket.bucket_id), sizeof(int));
+        //escribimos el bucket
+        hashfile.seekp(fb*sizeof(Record<T>), ios::cur);
+        hashfile.write(reinterpret_cast<char*>(&overflowbucket.next_bucket), sizeof(int));
+        hashfile.write(reinterpret_cast<char*>(&overflowbucket.size), sizeof(int));
+        hashfile.write(reinterpret_cast<char*>(&overflowbucket.local_d), sizeof(int));
 
+        }
+```
 
 <p align="center">
   <img src="imagenes/eh.insertar.png" alt="Insert - EH">
