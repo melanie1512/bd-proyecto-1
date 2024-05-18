@@ -8,8 +8,8 @@
 
 using namespace std;
 
-const int D = 3; // Global depth
-const int fb = 3; // Block factor
+const int D = 16; // Global depth
+const int fb = 16; // Block factor
 int lD;
 // Función hash
 template<typename T>
