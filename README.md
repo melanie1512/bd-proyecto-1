@@ -572,6 +572,7 @@ Con la función **get_bucket_id** buscamos el id correspondiente al bucket asign
 n_buckets: Cantidad de buckets asignados a un hashindex en ***address_table.dat***.  
 n_overflow: Cantidad de buckets con overflow de encadenamiento.  
 <p align="center">
+   
 |   Cabecera    | 
 |:-------------:|
 |   n_buckets   | 
@@ -582,11 +583,11 @@ n_overflow: Cantidad de buckets con overflow de encadenamiento.
 |        0      |       0      |
 |        01     |       1      |
 |        11     |       2      |
+
 </p>
 Dentro de esta función hacemos un llamado a la función auxiliar **same_index** la cual nos regresa el booleano de la relación entre el hash_index ingresado y el hash_index relacionado a cada bucket_id en **address_table.dat**.  
 
 ```cpp
-
 int get_bucket_id(vector<char> hindex, string adressT) {
     int id; 
     ifstream adressTFile(adressT, ios::binary);
@@ -620,6 +621,7 @@ int get_bucket_id(vector<char> hindex, string adressT) {
 ```
 Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para conocer en qué situación de inserción nos encontramos, teniendo en cuenta que éste tiene la siguiente estructura:
 <p align="center">
+   
 |   bucket_id   |    Records   | next_bucket  | size  | l_d |
 |:-------------:|:------------:|:------------:|:-----:|:---:|
 |        0      |   r1,r2,r3   |     -1       |   3   |  1  |
