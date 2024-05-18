@@ -564,14 +564,13 @@ Primero obtenemos el hash_index de la key del Record, para así poder obtener el
  void insert(Record<T> record) {
     vector<char> rhindex = fhash(record.key);
     int bkid = get_bucket_id(rhindex, adressT);
-.
-.
-.
+//...
 }
 ```
-Con la función get_bucket_id buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo "address_table.dat".
-El cual tiene la estructura:
+Con la función get_bucket_id buscamos el id correspondiente al bucket asignado al hash que coincide con el hash del key. Ésta búsqueda se realiza en el archivo "address_table.dat",el cual tiene la estructura: cabecera (cantidad de buckets con hashindex asignados y cantidad de overflowbuckets por encadenamiento)
 Ejemplo:
+|   n_buckets   |
+|   n_overflow  |
 |   HashIndex   |  Buckect_id  |
 |:-------------:|:------------:|
 |        0      |       0      |
@@ -579,6 +578,7 @@ Ejemplo:
 |        11     |       2      |
 
 ```cpp
+
 int get_bucket_id(vector<char> hindex, string adressT) {
     int id; 
     ifstream adressTFile(adressT, ios::binary);
@@ -586,11 +586,9 @@ int get_bucket_id(vector<char> hindex, string adressT) {
         cerr << "No se pudo abrir el archivo " << adressT << " para lectura." << endl;
         return -1;
     }
-
     int cant_arecords;
     adressTFile.seekg(0);
     adressTFile.read((char*)&cant_arecords, sizeof(int));
-
     AdressRecord temp;
     for (int i = 0; i < cant_arecords; ++i) {
         temp.hash_index.clear();
@@ -606,10 +604,44 @@ int get_bucket_id(vector<char> hindex, string adressT) {
             break; // Bucket ID found, break the loop
         }
     }
-
     adressTFile.close();
     return id;
 }
+```
+Una vez obtenido el bucket_id, podemos entrar al archivo "hashfile.dat" para conocer en qué situación de inserción nos encontramos, teniendo en cuenta que éste tiene la siguiente estructura:
+|   bucket_id   |    Records   | next_bucket  | size  | l_d |
+|:-------------:|:------------:|:------------:|:-----:|:---:|
+|        0      |   r1,r2,r3   |     -1       |   3   |  1  |
+|        1      |     r5       |     -1       |   1   |  1  |
+|        2      |     r4,r6    |     -1       |   2   |  1  |
+```cpp
+//insert...
+    fstream hashfile(this->hashfile, ios::binary | ios::in | ios::out);
+    if (!hashfile) {
+        cerr << "No se pudo abrir el archivo " << this->hashfile << " para lectura/escritura." << endl;
+        return;
+    }
+    //vamos a la posicion del indice del bucket, 16(4 ints:bucket_id, size, next_bucket, l_d)
+    size_t bucket_position = bkid * (16 + fb * sizeof(Record<T>));
+    cout<<"bucket pos: "<<bkid<<endl;
+    hashfile.seekg(bucket_position, ios::beg);
+    int bs = 0;
+    //leemos el size para saber en qué caso estamos
+    hashfile.seekg(8 + fb * sizeof(Record<T>), ios::cur);
+    hashfile.read(reinterpret_cast<char*>(&bs), sizeof(int));
+    if (bs < fb) {
+        cout << "Size : " << bs << " hay espacio." << endl;
+        bs++;//aumentamos el size
+        int actbs = bs;
+        //actualizamos el size del bucket.
+        hashfile.seekp(bucket_position + 8 + fb * sizeof(Record<T>), ios::beg);
+        hashfile.write(reinterpret_cast<char*>(&actbs), sizeof(int));
+        //escribimos el key del record
+        hashfile.seekp(bucket_position + 4 + (bs-1)*sizeof(Record<T>), ios::beg);
+        hashfile.write(reinterpret_cast<char*>(&record.key), sizeof(record.key));
+        cout << "Registro insertado correctamente." << endl;
+    }
+
 ```
 
 
