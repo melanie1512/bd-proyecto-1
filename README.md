@@ -369,10 +369,11 @@ La función `remove` está diseñada para eliminar un registro de un archivo que
 </p>
 
 #### Search
+La función `search` está diseñada para buscar registros en un archivo de hash utilizando una clave específica. La función devuelve un vector de registros que coinciden con la clave proporcionada. 
+
 <p align="center">
   <img src="imagenes/eh.search.png" alt="Search - EH">
 </p>
-La función `search` está diseñada para buscar registros en un archivo de hash utilizando una clave específica. La función devuelve un vector de registros que coinciden con la clave proporcionada. 
 
 ##### Descripción del Proceso
 1. **Inicialización**:
@@ -423,11 +424,11 @@ La función `search` está diseñada para buscar registros en un archivo de hash
 
 #### Remove
 
+La función `remove` está diseñada para eliminar un registro de un archivo de hash utilizando una clave específica. La función devuelve un valor booleano que indica si la eliminación fue exitosa. 
+
 <p align="center">
   <img src="imagenes/eh.eliminar.png" alt="Remove - EH">
 </p>
-
-La función `remove` está diseñada para eliminar un registro de un archivo de hash utilizando una clave específica. La función devuelve un valor booleano que indica si la eliminación fue exitosa. 
 
 ##### Descripción del Proceso
 
