@@ -14,8 +14,22 @@ A través de crear y manipular un DataSet usando técnicas de organización de a
 2. **Implementar Funcionalidades Básicas**:
    - Desarrollar algoritmos de inserción, búsqueda y eliminación para cada método de organización.
    - Comprender la dinámica de interacción entre usuarios y servidores al crear interfaces gráficas (GUI) para la manipulación de bases de datos.
+  
+### Resultaods esperados
 
-### Organización de Archivos
+1. **Reducción de Accesos a Memoria Secundaria**:
+   - Se espera minimizar las lecturas extensas en memoria secundaria al acceder directamente a los datos relevantes a través de índices.
+
+2. **Mejora en la Velocidad de Acceso**:
+   - Las consultas y búsquedas se ejecutarán más rápidamente al utilizar índices para localizar rápidamente los datos pertinentes en lugar de recorrer toda la base de datos.
+
+3. **Optimización del Tiempo de Procesamiento**:
+   - Operaciones como inserciones, actualizaciones y eliminaciones se realizarán de manera más eficiente al utilizar índices para localizar registros y realizar modificaciones.
+
+4. **Mejora del Rendimiento General**:
+   - La indexación mejora el rendimiento y la eficiencia del sistema de gestión de bases de datos, lo que permite manejar cargas de trabajo más grandes y proporcionar una experiencia de usuario más rápida y fluida.
+
+### Técnicas de indexación
 
 Las técnicas usadas para este proyecto son las siguientes:
 
