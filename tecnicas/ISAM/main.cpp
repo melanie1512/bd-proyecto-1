@@ -333,12 +333,12 @@ namespace isam{
         vector <Record> vfinal;
         vector <IndexPage<T>> vindex_primernivel= rangesearchprev(kinicio, kfinal);// voy al next ip
         for(int i: vindex_primernivel){ //aca guardo los keys de primer nivel
-            for (int element: vindex_primernivel[i]){ //aca itero sobre los elementos del primer nivel
+            for (int element: vindex_primernivel[i]){ //aca itero sobre los elementos del primer nivel (segundo nivel)
                 if(element=0){ //si es el primer elemento tengo que chequear desde dónde agregar
                     //entro a su dp
                     fstream dfile(dfile, ios::app | ios::binary | fstream::out);
                     //not sure de como seek aca
-                    file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i], ios::beg);
+                    file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i][element], ios::beg);
                     isam::DataPage dp; 
 
                     int beg=0;
@@ -364,12 +364,32 @@ namespace isam{
                     }
                 
                 }
-                else if(element==vindex_primernivel[i].n){
-
+                //copio todos los demás elementos
+                else if(element!=vindex_primernivel[i].n){ //not sure 
+                    //entro a su dp
+                    fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+                    //not sure de como seek aca
+                    file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i][element], ios::beg);
+                    isam::DataPage dp; 
+                    int j=0
+                    int final=dp.n-1;
+                    while(j<=final){
+                        vfinal.push_back(dp.records[j])
+                    }
+                }
+                else if (element+1>=kfinal){ //si ya el siguiente del 2ndo nivel supera mi kfinal
+                    //veo los elementos del dp del element
+                    fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+                    isam::DataPage dp; 
+                    //not sure de como seek aca
+                    file.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i][element], ios::beg);
+                    int j=0;
+                    while(vindex_primernivel[i][element]<=kfinal){
+                        vfinal.push_back(dp.records[j])
+                        j++;
+                    }
                 }
             }
-            vector <IndexPage<T>> vindex_segundonivel;
-            for (int element: )
         }
         
    };
