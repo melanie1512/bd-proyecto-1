@@ -560,6 +560,8 @@ La función `search` está diseñada para buscar un registro en un archivo que s
 Estructuras necesarias para la implementación:
 #### AdressRecord  
 Nos ayuda a mantener la relación entre hash_index y bucket_id necesaria para el archivo **adress_table.dat**.  
+**¿Por qué decidimos almacenar el hash_index en un vector<char>?**  
+Porque cada vez que se realiza un split se necesita modificar el hashindex (en este caso por adelante ya que trabajamos con sufijos, es decir empezando desde la derecha) y también al momento de encontrar el hashindex que coincida con el ingresado, debemos hacer uso de posiciones en el hashindex almacenado, según su **d** (profundidad local del hashindex). Para simplificar ese trabajo lo declaramos de esa manera
 ```cpp
 struct AdressRecord {
     vector<char> hash_index; // tamaño D, incializado en los constructores
@@ -567,16 +569,6 @@ struct AdressRecord {
     int d = 0;
 //...
 ```
-
-|               Estructura                  |            Objetivo            |
-|:-----------------------------------------:|:------------------------------:|
-|      ```cpp
-struct AdressRecord {
-    vector<char> hash_index; // tamaño D, incializado en los constructores
-    int bucket_id = 0;
-    int d = 0;
-//...
-```     |    Nos ayuda a mantener la relación entre hash_index y bucket_id necesaria para el archivo **adress_table.dat**.          |
 
 
 #### Insert
