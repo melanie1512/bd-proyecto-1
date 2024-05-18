@@ -38,6 +38,7 @@ namespace isam{
         T keys[MI];
         long pages[MI+1];
         int n;
+        int nextdel;
 
         IndexPage(){
             ofstream file(ifile, ios::app | ios::binary | fstream::out);
@@ -65,6 +66,7 @@ namespace isam{
         Record records[MD];
         int n;
         long nextPage;
+        vector <int> nextdel;
 
         DataPage(){
             ofstream file(dfile, ios::app | ios::binary | fstream::out);
@@ -93,7 +95,7 @@ namespace isam{
         isam::IndexPage<T> ip; 
         
         int beg=0;
-        int final=indexPage.n-1;
+        int final=ip.n-1;
 
         file.seekg(4+1, ios::beg);
         file.read(sizeof(IndexPage), ip);
@@ -114,7 +116,7 @@ namespace isam{
                 beg=mid+1;
             }
         }
-        return indexPage.pages[beg];
+        return ip.pages[beg];
         
     }
     
@@ -123,7 +125,7 @@ namespace isam{
         //obtengo mi ip2
         long p2=findpage(key); 
         //paso a mi segundo nivel
-        file.seekg(p2*(sizeof(indexPage)+1), ios::beg); 
+        file.seekg(p2*(sizeof(IndexPage)+1), ios::beg); 
         file.read(ip,sizeof(IndexPage))
 
         //aplico binary de mi 2ndo nivel
@@ -153,18 +155,111 @@ namespace isam{
         int final=file.n-1;
 
         
-        //busco mi key por medio del encadenamiento
+        //busco mi key en mi dp
         int i=0;
-        while(dataPage.records[i].nextpointer!=key){
-            dataPage.records[i]=dataPage[i].nextpointer; 
+        while(dataPage.records[i]!=key){
+            i++; 
         }
 
     }
 
     };
+    template <typename T>
+    void add(T r,T k){
+        fstream file(ifile, ios::app | ios::binary | fstream::out);
+        isam::IndexPage<T> ip0;  //mi primera page
+        
+        int beg=0;
+        int final=ip0.n-1;
+
+        file.seekg(4+1, ios::beg); //para ubicar la ip0
+        if(ip0.n!=ip0.MI-1){ //no esta lleno
+            isam::IndexPage<T> ipn;  //mi next ip
+            ip0.pages[-1]=ipn; //mi ultimo page apunta al next level page
+            //sort();
+            //me ubico en ipn y escribo el record
+            file.seekg(ipn*(sizeof(IndexPage)+1), ios::beg); 
+            file.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
+            //creo mi datapage para añadir mi record
+            ifstream dfile(dfile, ios::app | ios::binary | fstream::out);
+            isam::DataPage dpn;
+            dfile.seekg((4+1)+(1+sizeof(DataPage))*ipn, ios::beg);
+            dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
+        }
+        else{
+            file.seekg(4+1, ios::beg);
+            file.read(ip0,sizeof(IndexPage));
+
+            //hago mi binary para hallar el mayor key a k y obtener pos
+            while(beg<=final) {
+                int i=0;
+                int mid=(beg+final)/2;
+                
+                if(k==ip0.keys[mid]){
+                    return mid;
+                    file.close();
+                }
+                if(k<=ip0.keys[mid]){
+                    final=mid-1;
+                }
+                else if(k>=ip0.keys[mid]){
+                    beg=mid+1;
+                }
+            }
+            long x=ip0.pages[beg]; //hallo la pos para mi segundo nivel 
+            //ipx a memoria
+            file.seekg((4+1)+(x*(sizeof(IndexPage)+1)), ios::beg); 
+            isam::IndexPage <T> ipx;
+            if(ipx.n!=ipx.MI-1){
+                isam::DataPage dpn; //creo mi datapage
+                ipx.pages[x]=dpn;
+            }
+
+            else{
+                fstream dfile(dfile, ios::app | ios::binary | fstream::out);
+                file.seekg((4+1)+(1+sizeof(DataPage))*ipx, ios::beg);
+                isam::DataPage dp; 
+                
+                int beg=0;
+                int final=dp.n;
+                //binary search para hallar el primer mayor a k y obtener pos de page
+                while(beg<=final) {
+                    int i=0;
+                    int mid=(beg+final)/2;
+                    
+                    if(k==dp.records[mid]){
+                        return mid;
+                        dfile.close();
+                    }
+                    if(k<=dp.record[mid]){
+                        final=mid-1;
+                    }
+                    else if(k>=dp.record[mid]){
+                        beg=mid+1;
+                    }
+                }
+                //me ubico en la pagina de mi dp
+                long dpn=dp.record[beg]; 
+
+                if(dp.n!=dp.MD-1){ //si no esta full
+                    int pos=dp.nextdel; //uso free list para ver el next del y ubicarlo
+                    dfile.seekg((4+1)+(1+sizeof(DataPage))*pos, ios::beg);
+                    dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));  
+                }
+                else{
+                    isam::DataPage dpe; 
+                    isam::DataPage lastelem=dpn.records[-1]; //ultimo elemento
+                    lastelem.nextPage=dpe; //su nextpage será el dpe
+                    dpe.write(reinterpret_cast<const char*>(&k), sizeof(Record));  //escribo record
+                }
+            }
+        }
+    };
 
     /*
-    add(r, k):
+    add(r k):
         traer ip0 a memoria ram
         si ip0.n != ip0.MI - 1:
             crear ipx, donde x es la cantidad de index pages en el archivo de indexes
@@ -198,28 +293,6 @@ namespace isam{
         
 
 
-    */
-
-
-    /*
-    void add(Record record) {
-        std::ifstream file(dfile, ios::app | ios::binary | fstream::out);
-        file.seekg(0, ios::end);
-        int end = file.tellp();
-        if(file.tellp()==end){ //esta vacio solo añado
-            file.write(reinterpret_cast<const char*>(&nl), sizeof(char));
-        }
-        Record tmp,prev;
-        /*
-        while ((file.read((char*)&tmp, sizeof(Record))) && (tmp->nextpointer!=NULL &&tmp.codigo<record.codigo)) { //leo otros registos
-             prev=tmp;
-             tmp=tmp->nextpointer;
-        }
-        record->nextpointer=prev->nextpointer;
-        prev->nextpointer=record->nextpointer;
-        
-        file.close();
-    }
     */
 
 
