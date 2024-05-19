@@ -504,14 +504,13 @@ La función `search` está diseñada para buscar un registro en un archivo que s
         isam::IndexPage<T> ip; 
        vector <isam::IndexPage<T>> vindex_primernivel; 
        while(beg<=final) {
-               int mid=(beg+final)/2;
-               
-               if(ip.keys[mid]>=kinicio && ip.keys[mid]<=kfinal){
-                   vindex_primernivel.push_back(ip.keys[mid]);}
-               else if(ip.keys[mid]>=kinicio && ip.keys[mid]>=kfinal){
-                   final=mid-1;}
-               else if(ip.keys[mid]<=kinicio && ip.keys[mid]<=kfinal){ 
-                   beg=mid+1;}
+           int mid=(beg+final)/2;
+            if(ip.keys[mid].first>=kinicio && ip.keys[mid].first<=kfinal){
+                vindex_primernivel.push_back(ip.keys[mid].first);}
+            else if(ip.keys[mid].first>=kinicio && ip.keys[mid].first>=kfinal){
+                final=mid-1;}
+            else if(ip.keys[mid].first<=kinicio && ip.keys[mid].first<=kfinal){ 
+                beg=mid+1;}
            }
            return vindex_primernivel;
      ```
@@ -539,9 +538,12 @@ La función `search` está diseñada para buscar un registro en un archivo que s
        ```
     - El segundo caso, es para los elementos que están pasando el inicial pero aún no están en el último indexPage, para estos, solo los agregamos al vector
        ```cpp
-       while(j<=final){
-           vfinal.push_back(dp.records[j])
-       }
+       datafile.seekg((4+1)+(1+sizeof(DataPage))*vindex_primernivel[i][element], ios::beg);
+        DataPage dp; 
+        int j=0;
+        int final=dp.n-1;
+        while(j<=final){
+          vfinal.push_back(dp.records[j])}
        ```
     - El tercer caso es cuando estamos en el último indexPage, para este tenemos un límite de hasta dónde copiar los elementos
       ```cpp
