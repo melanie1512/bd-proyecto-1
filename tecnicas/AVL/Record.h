@@ -36,10 +36,16 @@ public:
         strncpy(brand, b.c_str(), sizeof(brand) - 1);
         strncpy(description, d.c_str(), sizeof(description) - 1);
         strncpy(ingredients, i.c_str(), sizeof(ingredients) - 1);
-        brand[sizeof(brand) - 1] = '\0'; // Asegurarse de que termine en nulo
-        description[sizeof(description) - 1] = '\0'; // Asegurarse de que termine en nulo
-        ingredients[sizeof(ingredients) - 1] = '\0'; // Asegurarse de que termine en nulo
+        brand[sizeof(brand) - 1] = '\0';
+        description[sizeof(description) - 1] = '\0';
+        ingredients[sizeof(ingredients) - 1] = '\0';
         servingsize = s;
+    }
+
+    std::string toString() const {
+        return "Record(fdc_id: " + std::to_string(fdc_id) + ", brand: " + brand +
+               ", description: " + description + ", ingredients: " + ingredients +
+               ", servingsize: " + std::to_string(servingsize) + ")";
     }
 
     void setData()
