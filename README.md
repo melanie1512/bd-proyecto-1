@@ -33,10 +33,9 @@ A través de crear y manipular un DataSet usando técnicas de organización de a
 
 Las técnicas usadas para este proyecto son las siguientes:
 
-- [ISAM-Sparse Index](poner link)
-- [Extendible Hashing](poner link)
-- [AVL](poner link)
-
+- [ISAM-Sparse Index]
+- [Extendible Hashing]
+- [AVL]
 ### Funciones implementadas
 
 Para cada técnica, se implementó las siguientes funciones:
