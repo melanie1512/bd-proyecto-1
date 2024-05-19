@@ -9,7 +9,7 @@
 using namespace std;
 
 const int D = 16; // Global depth
-const int fb = 16; // Block factor
+const int fb = 5; // Block factor
 int lD;
 // Función hash
 template<typename T>
@@ -29,22 +29,17 @@ std::vector<char> fhash(T key) {
     return hash_vector;
 }
 
-/*
-funcion necesaria para manejo de hash indexes
-std::vector<char> stringToVector(const std::string &str) {
-    return std::vector<char>(str.begin(), str.end());
-}
-*/
+
 
 template<typename T>
 struct Record {
-    int fdc_id; //primary key fdc_id
+    T fdc_id; //primary key fdc_id
     char brand[50];
     char description[30];
     char ingredients[110];
     float servingsize;
     Record() {};
-    Record(int fdc_id) {
+    Record(T fdc_id) {
         this->fdc_id = fdc_id;
     }
     Record(int id, const string& b, const string& d, const string& i, float s) {
@@ -96,10 +91,12 @@ struct AdressRecord {
 
     AdressRecord splitAdress(int newbucket_id) {
         if (d + 1 <= D) {
-            hash_index[lD-D] ='0';
+            this->hash_index[D-lD] ='0';
             }
         AdressRecord nuevoAR(newbucket_id, this->hash_index);
-        nuevoAR.hash_index[lD-D] = '1';
+        nuevoAR.hash_index[D-lD] = '1';
+        cout<<"aja: "<<nuevoAR.hash_index[D-lD] <<endl;
+        d++;
         return nuevoAR;
     }
 
@@ -131,7 +128,7 @@ int get_bucket_id(vector<char> hindex, string adressT) {
     int cant_arecords;
     adressTFile.seekg(0);
     adressTFile.read((char*)&cant_arecords, sizeof(int));
-
+    adressTFile.seekg(4, ios::cur);//por el int de cant overflows
     AdressRecord temp;
     for (int i = 0; i < cant_arecords; ++i) {
         temp.hash_index.clear();
@@ -144,6 +141,7 @@ int get_bucket_id(vector<char> hindex, string adressT) {
         if (same_hindex(temp.hash_index, hindex)) {
             adressTFile.close();
             id = temp.bucket_id;
+            cout<<id;
             break; // Bucket ID found, break the loop
         }
     }
@@ -184,9 +182,9 @@ struct Bucket {
         cout << "Datos Bucket : " << endl;
         cout << setw(3) << this->bucket_id;
         //como tiene size 0 los dos primeros buckets no se lee
-
+        cout<<setw(fb);
         for (int i = 0; i < size; i++) {
-             cout << setw(fb) << (this->records[i]).fdc_id;
+             cout << (this->records[i]).fdc_id;
         }
 
         cout << setw(3) << this->next_bucket;
@@ -228,6 +226,7 @@ public:
     //nos quedamos con temp
     cant_b_hi++;
     AdressRecord nuevo = temp.splitAdress(cant_b_hi);
+    nuevo.bucket_id = nuevo.bucket_id+1;
     //escribir ese nuevo adressrecord
     ofstream oAdressT(adressT, ios::binary | ios::app);
     //al final
@@ -250,7 +249,7 @@ public:
 
         Bucket<T> reading_bucket;
         for (int i = 0; i < n_buckets; ++i) {
-          
+            iHashfile.seekg(i*(16+fb*sizeof(Record<T>)), ios::beg);
             iHashfile.read(reinterpret_cast<char*>(&reading_bucket.bucket_id), sizeof(int));
             //iHashfile.read(reinterpret_cast<char*>(reading_bucket.records), fb * sizeof(Record<T>));
             iHashfile.seekg(i*(16+fb*sizeof(Record<T>))+4+fb*sizeof(Record<T>), ios::beg);
@@ -274,7 +273,12 @@ public:
         }
         iHashfile.close();
     }
-
+    void nbk_update(){
+      ofstream oAdressT(adressT, ios::binary);
+      oAdressT.seekp(0, ios::beg);
+      oAdressT.write((char*)&n_buckets, sizeof(int));
+      oAdressT.close();
+    }
    void showAdressTable(){
     ifstream iAdressT(adressT, ios::binary);
     iAdressT.seekg(0, ios::beg);
@@ -289,6 +293,7 @@ public:
         iAdressT.read((char*)&temp.bucket_id, sizeof(int));
         temp.showAR();
     }
+    iAdressT.close();
 
 
    }
@@ -357,28 +362,7 @@ public:
             adressTFile.read(reinterpret_cast<char*>(&n_buckets), sizeof(int));
             adressTFile.read(reinterpret_cast<char*>(&n_overflow), sizeof(int));
             adressTFile.close();
-            /*
-            cout << "El achivo AdressTfile ya existia entonces leemos " << this->n_buckets << " como numero de buckets en el AdressTFile. " << endl;
-
-            AdressRecord temp;
-            for (int i = 0; i < n_buckets; i++) {
-                for (int j = 0; j < D; j++) {
-                    char ch;
-                    adressTFile.read(&ch, sizeof(char));
-                    temp.hash_index[j] = ch;
-                }
-                adressTFile.read(reinterpret_cast<char*>(&temp.bucket_id), sizeof(int));
-                cout << "---------------------" << endl;
-                for (char ch : temp.hash_index) {
-                    cout << ch;
-                }
-                cout << " -> " << temp.bucket_id << endl;
-            }
-
             
-
-            cout << "Lectura de AdressTFile terminada. " << endl;
-            */
         }
         cout<<"AdressTable: ";
         showAdressTable();
@@ -388,8 +372,10 @@ public:
 
     void insert_(T key)
     {
-      vector<char> rhindex = fhash(key); // T
-      int bkid = get_bucket_id(rhindex, adressT);
+      vector<char> rhindex;
+      rhindex = fhash(key); // T
+      int bkid=0;
+      bkid = get_bucket_id(rhindex, adressT);
 
       // Abre el archivo para lectura y escritura
       fstream hashfile(this->hashfile, ios::binary | ios::in | ios::out);
@@ -400,19 +386,14 @@ public:
 
       // Desplazarse a la posición del bucket
       size_t bucket_position = bkid * (16 + fb * sizeof(Record<T>));
-      cout<<"bucket pos: "<<bkid<<endl;
+      
       hashfile.seekg(bucket_position, ios::beg);
 
       // Leer el tamaño actual del bucket
       int bs = 0;
       hashfile.seekg(8 + fb * sizeof(Record<T>), ios::cur);
       hashfile.read(reinterpret_cast<char*>(&bs), sizeof(int));
-
-
-
-      cout << "Size : " << bs << " hay espacio." << endl;
-        
-        // Incrementar el tamaño del bucket
+       // Incrementar el tamaño del bucket
         bs++;
         int actbs=bs;
         // Escribir el nuevo tamaño del bucket
@@ -423,15 +404,14 @@ public:
         //Escribir el nuevo record
         hashfile.seekp(bucket_position + 4 + (bs-1)*sizeof(Record<T>), ios::beg);
         hashfile.write(reinterpret_cast<char*>(&key), sizeof(T));
-       
         
-        cout << "Registro REinsertado correctamente." << endl;
     }
    void insert(Record<T> record) {
     //rhindex : record hash index
-    vector<char> rhindex = fhash(record.fdc_id); // T
-    int bkid = get_bucket_id(rhindex, adressT);
-
+    vector<char> rhindex;
+      rhindex = fhash(record.fdc_id); // T
+      int bkid=0;
+      bkid = get_bucket_id(rhindex, adressT);
     // Abre el archivo para lectura y escritura
     fstream hashfile(this->hashfile, ios::binary | ios::in | ios::out);
     if (!hashfile) {
@@ -490,7 +470,8 @@ public:
             }
         
          lD++;
-         n_buckets++;
+         this->n_buckets++;
+         nbk_update();
         }
         else{
         //procedemos al encadenamiento
@@ -514,7 +495,7 @@ public:
         hashfile.seekp(k*(16 +fb*sizeof(Record<T>)) + 4 + fb*sizeof(Record<T>) , ios::beg);
         hashfile.write((char*)&overflowbucket.bucket_id, sizeof(int));
         //asigncacion
-        overflowbucket.recods[overflowbucket.size] = record;
+        overflowbucket.records[overflowbucket.size] = record;
         //Escritura
         
         hashfile.seekp(0, ios::end);
@@ -650,3 +631,12 @@ vector<Record<T>> search(T key) {
     }
 
 };
+
+
+int main()
+{
+  ExtendibleHashing<int> exha("hashfile.dat", "address_table.dat"); 
+  Record<int> r1(7);
+
+  exha.insert(r1);
+}
