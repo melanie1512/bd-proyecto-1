@@ -592,7 +592,7 @@ Aquí guardamos los nombres de los dos archivos necesarios para el ExtendibleHas
 
 Y si los archivos ya existian, por la persistencia de datos, pues el constructor los lee y almacena datos importantes como la cantidad de buckets sin overlflow y la cantidad de buckets con overflow.  
 
-```
+```cpp
 template<typename T>
 class ExtendibleHashing {
 private:
