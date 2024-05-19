@@ -553,7 +553,85 @@ La función `search` está diseñada para buscar un registro en un archivo que s
 - **3 Casos de búsqueda por rango**: Tomamos en cuenta 3 casos, en el cual, el primero es para encontrar nuestra primera llave a buscar. El 2do caso es para copiar todos los elementos que se encuentren dentro del rango. El último es para ubicar nuestro último elemento a insertar en el vector.
 
 
+
 #### Remove
+1. **Ubicación del datapage**:
+   - Traemos a ip0 a memoria ram y buscamos a la key por medio de una búsqueda binaria de los índices y ubicamos a ipx. Posteriormente traemos a dpy  de la misma manera usando binaryIndex
+     
+```cpp
+IndexPage ip0;
+indexes.read((char*)ip0, sizeof(ip0)); // leo el primer index page
+
+long i = binaryIndex(ip0.keys, ip0.n, key); // busqueda en nivel 2
+long x = ip0.keys.second[i];
+       
+IndexPage ipx;
+indexes.seekg(2*sizeof(long)+sizeof(char)+ x*(sizeof(IndexPage)+1), ios::beg); // segundo nivel de index pages
+indexes.read((char*)ipx, sizeof(ipx));
+long j = binaryIndex(ipx.keys, ipx.n, key); // busqueda
+long y = ipy.keys.second[j];
+fstream data(dpage, ios::binary || ios::app);
+pair<long,long> ele = searchData(y, ele);
+DataPage dpy;
+
+```
+
+2. **Uso del nextdel en remove**
+- Para el uso de nextdel, primero ubicamos dentro del datapage, como dataND, con ello, leemos y lo cambiamos por un nuevo valor y escribimos la data en el lugar donde el nextdel estaba antes.
+- Caso donde datapage-n==1:
+```cpp
+if (dpy.n == 1){
+    dpy.nd = -1;
+    long dataND; // nextdel
+    data.seekg(sizeof(long), ios::beg);
+    data.read(reinterpret_cast<const char*>(&dataND), sizeof(long));
+    dataND = ele.first; // cambiamos el nextdel de la cabecera de datapage
+    data.seekp(sizeof(long), ios::beg);
+    data.write(reinterpret_cast<char*>(&dataND), sizeof(long));
+
+```
+- Luego vemos el número de records dentro de ipx, en el caso que solo fuera uno, nos ubicamos en el IndexPage y leemos su nextdel, Con esto, si tiene registros eliminados (es decir nextdel!=-1) se cambia el valor actual del IndexPage nextdel y se escribimos el actual valor de nextdel.
+``` cpp
+if (ipx.n == 1){
+  long indexND; // nextdel de la cabecera del archivo de indexes
+  indexes.seekg(sizeof(long), ios::beg);
+  indexes.read(reinterpret_cast<const char*>(&indexND), sizeof(long));
+                    
+  if (indexND != -1) ipx.nextdel = indexND;
+  indexND = x;
+  indexes.seekp(sizeof(long), ios::beg);
+  indexes.write(reinterpret_cast<char*>(&indexND), sizeof(long)); 
+  ipx.n--;
+```
+- Caso donde solo hay un índice: Para este caso, cambiamos el valor del tamaño de registros en el indexPage a 0 y escribimos.
+```cpp            
+   if (ip0.n == 1){
+      ip0.n = 0;
+      indexes.seekp(2*sizeof(long)+sizeof(char), ios::beg); // cambiar el tamaño de ip0 a 0
+      indexes.write((char*) &ip0, sizeof(ip0));
+```
+- Caso contrario: Movemos la última key en la posición del registro eliminado y actualizamos el tamaño
+```cpp
+   } else {
+      ip0.keys[j] = ip0.keys[n]; 
+      ip0.n--;
+      sort(ip0.keys+1, ipx.keys+ipx.n-1); // sortear
+  }
+}
+```
+Caso donde dp.nd!=1:
+En este caso, cambiamos el valor del nextdel de datapage por la posición del archivo a a eliminar. Posteriormente nextdel del archivo a eliminar apuntará al next de la cabecera
+```cpp
+} else {
+    if (dpy.nd != -1) dpy.nextdel[ele.second] = dpy.nd;
+    dpy.nd = ele.second;
+    data.seekp(2*sizeof(long)+sizeof(char)+ ele.first*(1+sizeof(DataPage)), ios::beg); // datapages
+    data.write((char*) dpy, sizeof(dpy));
+}
+} else {
+cout << "record not found" << endl;
+}
+```
 
 ### Extendible Hash
 Estructuras necesarias para la implementación:
