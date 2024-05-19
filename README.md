@@ -1085,8 +1085,10 @@ En resumen, el código implementa un parser SQL básico junto con un escáner qu
 <value> ::= /*strings o numeros */
 ```
 
-
 ## Experimentación
+
+## Conclusión
+
 
 ## Integrantes
 |                    **Bihonda Epiquien Rodas**                   |                          **Paola Maguiña**                          |                         **Camila Acosta**                          |                         **Melanie Cortez**                         |                       **Sofía Herrera**                       |
