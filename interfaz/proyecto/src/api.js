@@ -72,6 +72,7 @@ export async function rangeSearch(start, end) {
         console.error('Error fetching range search records:', error);
         throw error;
     }
+
 }
 
 /*export async function createTable(file_path, index_field) {
