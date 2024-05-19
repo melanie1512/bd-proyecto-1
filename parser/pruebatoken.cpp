@@ -9,10 +9,10 @@ using namespace std;
 int main() {
     const char* input =
             "CREATE TABLE FoodCentral FROM FILE '/Users/paolamaguinaaranda/Documents/2024-I/BD2/proyecto1/tecnicas/data/data.csv' USING INDEX AVL('fdc_id');"
-            //"INSERT INTO FoodCentral VALUES ('12345678', 'BrandC', 'DescriptionC', 'IngredientsC', '300.0');"
-            //"SELECT * FROM FoodCentral WHERE fdc_id = '12345678';"
-            //"SELECT * FROM FoodCentral WHERE fdc_id BETWEEN '1105905' AND '1105908';"
-            //"DELETE FROM FoodCentral WHERE fdc_id='12345678';";
+            "INSERT INTO FoodCentral VALUES ('12345678', 'BrandC', 'DescriptionC', 'IngredientsC', '300.0');"
+            "SELECT * FROM FoodCentral WHERE fdc_id = '12345678';"
+            "SELECT * FROM FoodCentral WHERE fdc_id BETWEEN '1105905' AND '1105908';"
+            "DELETE FROM FoodCentral WHERE fdc_id='12345678';";
 
     // Crear el escáner
     Scanner scanner(input);
