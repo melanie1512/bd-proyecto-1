@@ -362,19 +362,22 @@ La función `remove` está diseñada para eliminar un registro de un archivo que
     - En nuestro caso base es cuando el indexpage no está lleno, para esto creo un next indexpage en el cual escribo el record e igualmente para el datapage
     ```cpp
       file.seekg(4+1, ios::beg); 
-      if(ip0.n!=ip0.MI-1){ 
-      isam::IndexPage<T> ipn; 
-      ip0.pages[-1]=ipn;
-      sort();
-       file.seekg(ipn*(sizeof(IndexPage)+1), ios::beg); 
-       file.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+     if(ip0.n!=ip0.MI-1){ 
+         long ipn;  
+         ip0.keys[ip0.n].second=ipn; 
+         sort(ip0.keys+1, ip0.keys+ip0.n-1);
+         
+         file.seekg(ipn*(sizeof(IndexPage <T>)+1), ios::beg); 
+         file.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
    ```
 - Luego procedo a crear mi datapage para añadir el record en el datapage 
    ```cpp
-       ifstream dfile(dfile, ios::app | ios::binary | fstream::out);
-       isam::DataPage dpn;
-       dfile.seekg((4+1)+(1+sizeof(DataPage))*ipn, ios::beg);
-       dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+       fstream datfile(dfile, ios::app | ios::binary | fstream::out);
+      DataPage dpn;
+      datfile.seekg((4+1)+(1+sizeof(DataPage))*ipn, ios::beg);
+      datfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
     ```
 2. **Caso general**
     - Hago un binary search para hallar el mayor key a k y obtener la posición donde insertar mediante binarysearch aprovechando que el indexpage está ordenado para poder ubicar mejor key en forma logarítmica.
@@ -383,52 +386,57 @@ La función `remove` está diseñada para eliminar un registro de un archivo que
       file.read(ip0,sizeof(IndexPage));
                   
       while(beg<=final) {
-          int i=0;
-          int mid=(beg+final)/2;
-                  
-          if(k==ip0.keys[mid]){
-              return mid;
-              file.close();}
-          if(k<=ip0.keys[mid]){
-              final=mid-1;}
-         else if(k>=ip0.keys[mid]){
-              beg=mid+1; }
-          }
-      long x=ip0.pages[beg]; 
+       int i=0;
+       int mid=(beg+final)/2;
+       
+       if(k==ip0.keys[mid].first){
+           file.close();
+       }
+       if(k<=ip0.keys[mid].first){
+           final=mid-1;
+       }
+       else if(k>=ip0.keys[mid].first){
+           beg=mid+1;
+       }
+   }
+      long x=ip0.keys[beg].second; 
    ```
 3. **Uso del 2ndo nivel de IndexPage**
     - Para esto, obtengo la posición actual del binary search del paso 2 y me posiciono en el 2ndo nivel de IndexPage y uso su dataPage
    ```cpp
-      file.seekg((4+1)+(x*(sizeof(IndexPage)+1)), ios::beg); 
-      isam::IndexPage <T> ipx;
+      file.seekg((4+1)+(x*(sizeof(IndexPage<T>)+1)), ios::beg); 
+      IndexPage <T> ipx;
+      
+      fstream datfile(dfile, ios::app | ios::binary | fstream::out);
+      DataPage dpn;
+      datfile.seekg((4+1)+(1+sizeof(DataPage))*x, ios::beg);
+      datfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
       if(ipx.n!=ipx.MI-1){
-          isam::DataPage dpn; 
-          ipx.pages[x]=dpn;}
+          ipx.keys[x].second=dpn.records[x].fdc_id;
+      }
       
       else{
-          fstream dfile(dfile, ios::app | ios::binary | fstream::out);
-          file.seekg((4+1)+(1+sizeof(DataPage))*ipx, ios::beg);
-          isam::DataPage dp; 
-                  
-          int beg=0;
-          int final=dp.n;
-          //{...} Realizo un binary search para hallar el primer mayor a k y
-          //obtener la posición de página
-          long dpn=dp.record[beg]; 
+          fstream datafile(dfile, ios::app | ios::binary | fstream::out);
+          datafile.seekg((4+1)+(1+sizeof(DataPage))*x, ios::beg);
+          DataPage dp; 
+          datafile.write(reinterpret_cast<const char*>(&k), sizeof(Record));
+
    ```
 - Ahora uso la datapage encontrada mediante el binary-search del paso anterior para ubicar el registro dentro del datapage. Hay que considerar que para la función insert estamos usando `free list` para tomar en cuenta un espacio de nextdel
 
    ```cpp
-   if(dp.n!=dp.MD-1){
-       int pos=dp.nextdel;
-       dfile.seekg((4+1)+(1+sizeof(DataPage))*pos, ios::beg);
-       dfile.write(reinterpret_cast<const char*>(&k), sizeof(Record));  }
-   else{
-       isam::DataPage dpe; 
-       isam::DataPage lastelem=dpn.records[-1]; //ultimo elemento
-       lastelem.nextPage=dpe; //su nextpage será el dpe
-       dpe.write(reinterpret_cast<const char*>(&k), sizeof(Record)); }
-       }
+   if(dp.n!=dp.MD-1){ //si no esta full
+        long pos=dp.nextdel;}
+        datafile.seekg((4+1)+(1+sizeof(DataPage))*pos, ios::beg);
+        datafile.write(reinterpret_cast<const char*>(&k), sizeof(Record));  
+    }
+    else{
+        DataPage dpe; 
+        DataPage lastelem=dp.records[-1];
+        lastelem.nextPage=dpe; 
+        dpe.write(reinterpret_cast<const char*>(&k), sizeof(Record)); 
+    }
    ```
 ##### Consideraciones 
 - **Lectura y Escritura Binaria en IndexPage**: Debido a que el IndexPage está ordenado, es efectivo el uso de búsqueda binaria tanto para el 1er nivel y el 2do.
