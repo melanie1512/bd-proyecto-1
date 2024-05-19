@@ -154,7 +154,7 @@ int get_bucket_id(vector<char> hindex, string adressT) {
 
 template<typename T>
 struct Bucket {
-    T bucket_id;
+    int bucket_id;
     Record<T> records[fb];
     int next_bucket;
     int size;
@@ -263,7 +263,7 @@ public:
               for(int j=0;j<reading_bucket.size;j++)
               {
                  iHashfile.seekg(i*(16+fb*sizeof(Record<T>))+4+j*sizeof(Record<T>), ios::beg);
-                 iHashfile.read((char*)&((reading_bucket.records[j]).fdc_id), sizeof((reading_bucket.records[j]).fdc_id);
+                 iHashfile.read((char*)&((reading_bucket.records[j]).fdc_id), sizeof((reading_bucket.records[j]).fdc_id));
 
               }
 
@@ -503,12 +503,12 @@ public:
         int k=0;
         while(mainbucket.next_bucket != -1)
         {
-          hashfile.seekg(i*(16 +fb*sizeof(Record<T>)) + 4 + fb*sizeof(Record<T>) , ios::beg);
+          hashfile.seekg(k*(16 +fb*sizeof(Record<T>)) + 4 + fb*sizeof(Record<T>) , ios::beg);
           hashfile.read((char*)&mainbucket.next_bucket, sizeof(int));
           k++;
         }
          //encontro el ultimo bucket para crearle su overflow
-        n_overflow+; //diferencia entre buckets de adressT y hashfile
+        n_overflow++; //diferencia entre buckets de adressT y hashfile
         overflowbucket.bucket_id = n_buckets + n_overflow;
 
         hashfile.seekp(k*(16 +fb*sizeof(Record<T>)) + 4 + fb*sizeof(Record<T>) , ios::beg);
@@ -516,7 +516,8 @@ public:
         //asigncacion
         overflowbucket.recods[overflowbucket.size] = record;
         //Escritura
-        hashfile.seekp(0, ios::app);
+        
+        hashfile.seekp(0, ios::end);
         hashfile.write(reinterpret_cast<char*>(&overflowbucket.bucket_id), sizeof(int));
         //
         hashfile.seekp(fb*sizeof(Record<T>), ios::cur);
